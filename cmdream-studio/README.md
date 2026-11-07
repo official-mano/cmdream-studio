@@ -8,14 +8,16 @@ The repository contains a public-facing website and animation workspace (`index.
 
 ## What it does
 
-- Animate flowers, hearts, rings, fireworks, stars, smoke, waves, and houses with a layered, smooth-looping ASCII renderer, motif-matched color and a near-black CRT-inspired terminal preview.
+- Animate flowers, hearts, rings, fireworks, stars, smoke, waves, and houses with a layered, smooth-looping ASCII renderer, prompt-matched color and a near-black CRT-inspired terminal preview. Offline scene descriptions retain the requested idea and pick a compatible palette from color and mood words.
 - Ask a configured AI composer for other subjects: it returns a bounded illustration plan made of safe shapes, which the fixed renderer draws without running model code.
 - Choose low, medium, high, extra, or max detail; each level applies consistently across every supported subject.
+- Turn on **Fine detail** in the terminal preview to shrink the display glyphs and render a resize-aware grid up to 240×60; turn it off for the larger, standard preview.
 - Compose scenes offline without an account, model, or API key.
 - Use a local Ollama model from the desktop app.
 - Optionally connect OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, or an OpenAI-compatible provider.
 - Preview, pause, restart, seek, change playback speed, revisit recent scenes, and export scene JSON or standalone HTML.
 - Inspect the validated scene plan before exporting it.
+- Explore six live, max-detail renderer examples on the homepage; their grids adapt to the available card size and respect reduced-motion preferences.
 
 ## Run locally
 

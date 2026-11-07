@@ -182,14 +182,17 @@ function normalizePhases(value) {
 }
 
 function inferredPalette(prompt, motifs) {
-  if (/\b(ocean|sea|water|aqua|teal)\b/i.test(prompt)) return "ocean";
-  if (/\b(golden|warm|sunset|amber|fire)\b/i.test(prompt)) return "ember";
-  if (/\b(ice|frost|blue|moonlight|space|galaxy|cosmic)\b/i.test(prompt)) return "cosmic";
-  if (/\b(pink|rose|red|magenta|purple|violet)\b/i.test(prompt)) return "garden";
+  if (/\b(ocean|sea|water|aqua|teal|turquoise)\b/i.test(prompt)) return "ocean";
+  if (/\b(ice|icy|frost|frosty|blue|silver|white|moonlight)\b/i.test(prompt)) return "ice";
+  if (/\b(green|lime|emerald|forest)\b/i.test(prompt)) return "phosphor";
+  if (/\b(golden|gold|yellow|amber)\b/i.test(prompt)) return "amber";
+  if (/\b(warm|sunset|orange|fire)\b/i.test(prompt)) return "ember";
+  if (/\b(pink|rose|red|magenta)\b/i.test(prompt)) return "garden";
+  if (/\b(purple|violet|space|galaxy|cosmic)\b/i.test(prompt)) return "cosmic";
   if (motifs.includes("fireworks")) return "festival";
+  if (motifs.includes("flower")) return "garden";
   if (motifs.includes("waves")) return "ocean";
   if (motifs.includes("ring") || motifs.includes("stars") || motifs.includes("smoke")) return "cosmic";
-  if (motifs.includes("flower")) return "garden";
   return "ember";
 }
 
@@ -200,14 +203,16 @@ export function composeOffline(prompt, detail = "high") {
     throw new Error("The offline composer does not know how to draw that subject yet. Choose an AI composer in Settings for custom subjects, or try a supported scene like a heart, rose, ring, fireworks, house, stars, smoke, or waves.");
   }
   const title = cleanText(prompt, "A little daydream", 48).replace(/[.!?].*$/, "").slice(0, 42) || "A little daydream";
+  const sceneDescription = cleanText(prompt, "A little daydream", 120).replace(/^[A-Z]/, (letter) => letter.toLowerCase());
+  const palette = inferredPalette(prompt, motifs);
   return validateScene({
     version: 2,
     title,
-    description: `A looping ${motifs.join(" and ")} animation, composed offline.`,
+    description: `A looping offline scene of ${sceneDescription}, styled with ${palette} colors.`,
     duration: 8,
     fps: 24,
     loop: true,
-    palette: inferredPalette(prompt, motifs),
+    palette,
     motifs,
     layers: LAYERS,
     detail,

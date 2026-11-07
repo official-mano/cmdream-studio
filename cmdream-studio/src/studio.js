@@ -138,10 +138,11 @@ function fileSlug(value) {
 
 function frameSize() {
   const screen = output.closest(".terminal-screen");
+  const fineDetail = screen.classList.contains("fine-detail");
   const fontSize = Number.parseFloat(getComputedStyle(output).fontSize) || 10;
   const lineHeight = Number.parseFloat(getComputedStyle(output).lineHeight) || fontSize * 1.26;
-  const columns = Math.max(64, Math.min(120, Math.floor((screen.clientWidth - 44) / (fontSize * 0.61))));
-  const rows = Math.max(24, Math.min(40, Math.floor((screen.clientHeight - 70) / lineHeight)));
+  const columns = Math.max(64, Math.min(fineDetail ? 240 : 120, Math.floor((screen.clientWidth - 44) / (fontSize * 0.61))));
+  const rows = Math.max(24, Math.min(fineDetail ? 60 : 40, Math.floor((screen.clientHeight - 70) / lineHeight)));
   return { columns, rows };
 }
 
@@ -153,7 +154,12 @@ function drawFrameAt(position) {
 
 function setProviderLabel() {
   const labels = { offline: "Offline composer", ollama: `Ollama · ${configs.ollama.model}`, openai: `OpenAI · ${configs.openai.model}`, anthropic: `Claude · ${configs.anthropic.model}`, gemini: `Gemini · ${configs.gemini.model}`, azure: `Azure · ${configs.azure.model || "deployment"}`, compatible: `Compatible · ${configs.compatible.model || "model"}` };
-  $("#active-model").textContent = `◉ ${labels[activeProvider]}`;
+  const badge = $("#active-model");
+  badge.dataset.provider = activeProvider;
+  badge.title = activeProvider === "offline"
+    ? "Built-in scene composer. Your prompt stays on this device."
+    : `Selected composer: ${labels[activeProvider]}`;
+  $("#active-model-label").textContent = labels[activeProvider];
 }
 
 function addField(container, label, key, value, options = {}) {
@@ -338,6 +344,18 @@ $("#seek").addEventListener("input", (event) => {
   startedAt = performance.now();
   drawFrameAt(playhead);
   if (paused) $("#time-label").textContent = `00:${String(Math.ceil(scene.duration - playhead)).padStart(2, "0")}`;
+});
+$("#detail-toggle").addEventListener("click", (event) => {
+  const enabled = event.currentTarget.getAttribute("aria-pressed") !== "true";
+  event.currentTarget.setAttribute("aria-pressed", String(enabled));
+  event.currentTarget.title = enabled
+    ? "Fine detail is on: smaller text, denser character grid"
+    : "Use a smaller terminal font and a denser character grid";
+  $("#preview-screen .terminal-screen").classList.toggle("fine-detail", enabled);
+  lastFrame = 0;
+  if (!scene) return;
+  const position = paused ? playhead : (playhead + ((performance.now() - startedAt) / 1000) * playbackSpeed) % scene.duration;
+  drawFrameAt(position);
 });
 window.addEventListener("resize", () => {
   lastFrame = 0;

@@ -90,9 +90,13 @@ test("custom illustration plans accept bounded shapes and reject code or invalid
 
 test("offline composer chooses a vivid motif-matched palette", () => {
   assert.equal(composeOffline("A rose opening in the garden").palette, "garden");
-  assert.equal(composeOffline("A silver ring turning in deep space").palette, "cosmic");
+  assert.equal(composeOffline("A silver ring turning in deep space").palette, "ice");
   assert.equal(composeOffline("Colorful fireworks blooming").palette, "festival");
   assert.equal(composeOffline("Blue ocean waves moving").palette, "ocean");
+  assert.equal(composeOffline("A bright blue heart beating").palette, "ice");
+  assert.equal(composeOffline("A golden house glowing at night").palette, "amber");
+  assert.equal(composeOffline("An emerald heart pulsing").palette, "phosphor");
+  assert.match(composeOffline("A vivid pink flower opening slowly").description, /looping offline scene of a vivid pink flower opening slowly/);
 });
 
 test("model response parser accepts JSON fences but only validated plans", () => {
@@ -111,6 +115,15 @@ test("renderer fills responsive 100 by 32 and 120 by 40 terminal frames", () => 
     assert.ok(rows.some((row) => row.length >= Math.floor(width * 0.65)));
     assert.ok(rows.every((row) => row.length <= width));
   }
+});
+
+test("renderer supports fine-detail terminal grids beyond the standard preview size", () => {
+  const scene = composeOffline("A rose opening under the stars", "max");
+  const rows = createFrameRenderer()(scene, 5, 220, 56).split("\n");
+  assert.equal(rows.length, 56);
+  assert.ok(rows.some((row) => row.length >= 180));
+  assert.ok(rows.every((row) => row.length <= 220));
+  assert.ok(rows.some((row) => row.includes("@")));
 });
 
 test("detail examples make a visible, consistent density progression", () => {
