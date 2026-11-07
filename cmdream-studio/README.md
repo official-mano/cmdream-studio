@@ -8,8 +8,9 @@ The repository contains a public-facing website and animation workspace (`index.
 
 ## What it does
 
-- Animate flowers, rings, fireworks, stars, smoke, waves, and houses with a layered, smooth-looping ASCII renderer, motif-matched color and a near-black CRT-inspired terminal preview.
-- Choose low, medium, or high scene detail; the renderer adapts from compact terminal previews to 100×32 and 120×40 layouts.
+- Animate flowers, hearts, rings, fireworks, stars, smoke, waves, and houses with a layered, smooth-looping ASCII renderer, motif-matched color and a near-black CRT-inspired terminal preview.
+- Ask a configured AI composer for other subjects: it returns a bounded illustration plan made of safe shapes, which the fixed renderer draws without running model code.
+- Choose low, medium, high, extra, or max detail; each level applies consistently across every supported subject.
 - Compose scenes offline without an account, model, or API key.
 - Use a local Ollama model from the desktop app.
 - Optionally connect OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, or an OpenAI-compatible provider.
@@ -44,7 +45,7 @@ npm run build
 
 ### Offline composer
 
-The built-in composer is rule-based and available immediately. It needs no network connection and sends no prompts anywhere.
+The built-in composer draws its supported subjects immediately, including hearts, without a network connection or API key. It sends no prompts anywhere. For a subject outside its built-in set, choose an AI composer in Settings; the model can describe a custom illustration as validated lines, shapes, and colors. Online/local models can interpret more requests, but results depend on that model and are not guaranteed for every possible subject.
 
 ### Ollama on your computer
 
@@ -96,7 +97,7 @@ The generated Windows installers are not code-signed. Windows may show a SmartSc
 
 ## Scene plans and renderer
 
-Plans are JSON data only. Version 2 scene plans add an allowlisted layer stack, a low/medium/high detail value, bounded per-subject form settings, and easing phases for the animation. The validator clamps numeric values and rejects unsupported properties and animation parts. Older version 1 history entries are upgraded when loaded. The renderer consumes only the normalized plan; it never interprets JavaScript, HTML, shell commands, or model-generated drawing instructions. Standalone HTML exports embed the same fixed renderer and validated scene data.
+Plans are JSON data only. Version 2 scene plans add an allowlisted layer stack, a low/medium/high/extra/max detail value, bounded per-subject form settings, and easing phases for the animation. Custom subjects can be represented by a limited set of normalized-coordinate primitives (lines, rectangles, ellipses, triangles, hearts, and polylines) with allowlisted colors, glyphs, and motions. The validator clamps numeric values and rejects unsupported properties, shapes, and animation parts. Older version 1 history entries are upgraded when loaded. The renderer consumes only the normalized plan; it never interprets JavaScript, HTML, shell commands, or model-generated drawing instructions. Standalone HTML exports embed the same fixed renderer and validated scene data.
 
 The renderer gives each supported subject its own structure rather than filling the canvas with generic symbols. A rose has nested petal layers, shaded folds, a pollen center, a curved stem, veined leaves, and a grounded base. Its stem, leaves, outer petals, middle petals, inner petals, and stamens enter in overlapping phases; the bloom holds, then closes gently before the loop. Fireworks expand and fade radially, rings rotate with facet highlights, and houses include a roof, walls, door, windows, and changing interior light. Background stars use sparse depth layers and restrained twinkle/parallax.
 
@@ -104,11 +105,13 @@ Detail is selectable in the workspace and saved into each scene plan:
 
 | Detail | Example rose plan | Render treatment |
 |---|---|---|
-| Low | `DETAIL_EXAMPLES.low` in `src/scene.js` | Fewer stars and particles; simple petal shading and a compact shape. |
-| Medium | `DETAIL_EXAMPLES.medium` in `src/scene.js` | More petal contours, foliage veins, and background depth. |
-| High | `DETAIL_EXAMPLES.high` in `src/scene.js` | Full nested bloom, folds and highlights, pollen, leaf veins, thorns, and extra particles. |
+| Low | `DETAIL_EXAMPLES.low` in `src/scene.js` | Sparse stars and particles, simple shading, and fewer subject accents. |
+| Medium | `DETAIL_EXAMPLES.medium` in `src/scene.js` | More contours, shading, foliage veins, and background depth. |
+| High | `DETAIL_EXAMPLES.high` in `src/scene.js` | Full subject detail, layered shading, highlights, and balanced particles. |
+| Extra | `DETAIL_EXAMPLES.extra` in `src/scene.js` | Denser textures, finer contours, more subject accents, and additional particles. |
+| Max | `DETAIL_EXAMPLES.max` in `src/scene.js` | Maximum bounded detail, depth, shading, highlights, and motion accents. |
 
-These are complete, validated scene plans for the same rose prompt; only their `detail` field differs. They can be inspected with `DETAIL_EXAMPLES` in the source or composed in the workspace at each setting.
+These are complete, validated scene plans for the same rose prompt; only their `detail` field differs. The same shared levels are available for every built-in and custom subject. They can be inspected with `DETAIL_EXAMPLES` in the source or composed in the workspace at each setting.
 
 Scene history is stored in the browser's local storage on that device. Provider credentials and settings are not persisted.
 

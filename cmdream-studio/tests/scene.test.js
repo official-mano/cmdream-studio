@@ -15,6 +15,18 @@ test("offline composer recognizes multiple subjects and returns a version 2 loop
   assert.ok(scene.phases.some((phase) => phase.part === "outer-petals"));
 });
 
+test("offline composer recognizes a heart even when the prompt contains a common typo", () => {
+  for (const prompt of ["A glowing heart beating gently", "A glowing hart under the stars"]) {
+    const scene = composeOffline(prompt);
+    assert.ok(scene.motifs.includes("heart"));
+    assert.equal(scene.form.heart.type, "heart");
+  }
+});
+
+test("offline composer explains when a requested subject needs an AI composer", () => {
+  assert.throws(() => composeOffline("A dragon flying over a castle"), /Choose an AI composer in Settings/);
+});
+
 test("scene validator rejects executable fields but migrates older version-one scene data", () => {
   const scene = composeOffline("a ring turning in the night");
   assert.throws(() => validateScene({ ...scene, script: "alert(1)" }), /unsupported fields/);
@@ -47,6 +59,35 @@ test("scene plans clamp numeric data and reject unsupported structures", () => {
   assert.throws(() => validateScene({ ...scene, phases: [{ part: "javascript", start: 0, end: 1 }] }), /unsupported animation part/);
 });
 
+test("custom illustration plans accept bounded shapes and reject code or invalid glyphs", () => {
+  const scene = composeOffline("A beating heart");
+  const custom = validateScene({
+    ...scene,
+    motifs: ["custom"],
+    form: {
+      custom: {
+        type: "illustration",
+        parts: ["shapes"],
+        shapes: [
+          { type: "ellipse", x: 0.25, y: 0.2, width: 0.5, height: 0.6, color: "petal2", glyph: "#", motion: "pulse" },
+          { type: "polyline", x: 0.2, y: 0.2, width: 0.5, height: 0.5, points: [[0, 0], [0.5, 1], [1, 0]], color: "light", glyph: "/" }
+        ]
+      }
+    }
+  });
+  assert.equal(custom.form.custom.shapes.length, 2);
+  assert.equal(custom.form.custom.shapes[0].motion, "pulse");
+  assert.throws(() => validateScene({
+    ...custom,
+    form: { custom: { shapes: [{ type: "ellipse", x: 0.1, y: 0.1, width: 0.5, height: 0.5, glyph: "<script>" }] } }
+  }), /unsupported terminal glyph/);
+  assert.throws(() => validateScene({
+    ...custom,
+    form: { custom: { shapes: [{ type: "javascript", x: 0.1, y: 0.1 }] } }
+  }), /unsupported shape type/);
+  assert.throws(() => validateScene({ ...custom, form: { custom: { shapes: [] } } }), /at least one safe shape/);
+});
+
 test("offline composer chooses a vivid motif-matched palette", () => {
   assert.equal(composeOffline("A rose opening in the garden").palette, "garden");
   assert.equal(composeOffline("A silver ring turning in deep space").palette, "cosmic");
@@ -76,10 +117,47 @@ test("detail examples make a visible, consistent density progression", () => {
   assert.equal(DETAIL_EXAMPLES.low.detail, "low");
   assert.equal(DETAIL_EXAMPLES.medium.detail, "medium");
   assert.equal(DETAIL_EXAMPLES.high.detail, "high");
+  assert.equal(DETAIL_EXAMPLES.extra.detail, "extra");
+  assert.equal(DETAIL_EXAMPLES.max.detail, "max");
   const render = createFrameRenderer();
   const inkCount = (scene) => [...render(scene, 5, 100, 32)].filter((character) => character !== " " && character !== "\n").length;
   assert.ok(inkCount(DETAIL_EXAMPLES.low) < inkCount(DETAIL_EXAMPLES.medium));
   assert.ok(inkCount(DETAIL_EXAMPLES.medium) < inkCount(DETAIL_EXAMPLES.high));
+  assert.ok(inkCount(DETAIL_EXAMPLES.high) < inkCount(DETAIL_EXAMPLES.extra));
+  assert.ok(inkCount(DETAIL_EXAMPLES.extra) < inkCount(DETAIL_EXAMPLES.max));
+});
+
+test("all built-in subjects respond to the shared extra and max detail levels", () => {
+  const prompts = [
+    "A rose opening under the stars",
+    "A beating heart",
+    "A ring turning in space",
+    "Fireworks blooming at night",
+    "Stars twinkling in the night",
+    "Smoke drifting gently",
+    "Waves flowing at sea",
+    "A house glowing at night"
+  ];
+  const render = createFrameRenderer();
+  for (const prompt of prompts) {
+    const low = composeOffline(prompt, "low");
+    const max = composeOffline(prompt, "max");
+    assert.notEqual(render(low, 3.5, 100, 32), render(max, 3.5, 100, 32), `${prompt} should use the selected detail level`);
+  }
+  const custom = validateScene({
+    ...composeOffline("A beating heart"),
+    motifs: ["custom"],
+    form: {
+      custom: {
+        shapes: [{ type: "ellipse", x: 0.3, y: 0.25, width: 0.4, height: 0.5, color: "petal2", glyph: "@" }]
+      }
+    }
+  });
+  assert.notEqual(
+    render(validateScene({ ...custom, detail: "low" }), 3.5, 100, 32),
+    render(validateScene({ ...custom, detail: "max" }), 3.5, 100, 32),
+    "custom illustrations should use the selected detail level"
+  );
 });
 
 test("rose animation visibly changes through its staged opening", () => {
@@ -93,6 +171,36 @@ test("rose animation visibly changes through its staged opening", () => {
   assert.ok(open.includes("@"));
   assert.ok(open.includes("*"));
   assert.ok(open.includes("|"));
+});
+
+test("heart renderer creates a large colorful pulsing silhouette", () => {
+  const scene = composeOffline("A glowing heart beating gently among tiny stars");
+  const render = createFrameRenderer();
+  const frame = render(scene, 2, 100, 32);
+  const lines = frame.split("\n");
+  const heartRows = lines.filter((row) => row.includes("@") || row.includes("+") || row.includes("#"));
+  assert.ok(scene.motifs.includes("heart"));
+  assert.ok(heartRows.length >= 8);
+  assert.ok(heartRows.some((row) => row.length > 50));
+  assert.notEqual(render(scene, 0, 100, 32), render(scene, 2, 100, 32));
+});
+
+test("custom illustration primitives render without executing scene data", () => {
+  const scene = validateScene({
+    version: 2, title: "A paper kite", description: "A kite drifting across the sky.", duration: 8, fps: 24,
+    loop: true, palette: "cosmic", motifs: ["custom"], detail: "high", layers: ["subject"],
+    form: {
+      custom: {
+        type: "illustration", parts: ["shapes"], shapes: [
+          { type: "triangle", x: 0.35, y: 0.2, width: 0.3, height: 0.35, color: "petal3", glyph: "#", motion: "sway" },
+          { type: "polyline", x: 0.5, y: 0.5, width: 0.2, height: 0.4, points: [[0.5, 0], [0.5, 1], [0, 0.75], [0.5, 1], [1, 0.75]], color: "light", glyph: "/" }
+        ]
+      }
+    }
+  });
+  const frame = createFrameRenderer()(scene, 1, 100, 32);
+  assert.match(frame, /[#/]/);
+  assert.doesNotMatch(frame, /script/);
 });
 
 test("colorized terminal output keeps the palette and does not render scene text as markup", () => {

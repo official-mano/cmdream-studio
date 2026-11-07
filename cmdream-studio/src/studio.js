@@ -250,10 +250,11 @@ $("#prompt-form").addEventListener("submit", async (event) => {
   button.innerHTML = '<span class="spinner"></span> Composing…';
   showStatus(activeProvider === "offline" ? "Composing your scene on this device…" : `Asking ${activeProvider} for a scene plan…`);
   try {
+    const detail = $("#detail-select").value;
     const result = activeProvider === "offline"
-      ? composeOffline(prompt, $("#detail-select").value)
-      : await composeWithProvider(activeProvider, configs[activeProvider], prompt, $("#detail-select").value);
-    showScene(result);
+      ? composeOffline(prompt, detail)
+      : await composeWithProvider(activeProvider, configs[activeProvider], prompt, detail);
+    showScene({ ...result, detail });
     showStatus(`“${result.title}” is ready to play.`, "success");
   } catch (error) {
     showStatus(`Scene not created: ${error.message}`, "error");

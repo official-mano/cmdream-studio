@@ -28,7 +28,8 @@ function createSceneRenderer() {
     const time = ((seconds % scene.duration) + scene.duration) % scene.duration / scene.duration;
     const motifSet = new Set(scene.motifs);
     const palette = palettes[scene.palette] || palettes.garden;
-    const density = scene.detail === "low" ? 0.55 : scene.detail === "medium" ? 0.8 : 1;
+    const detailIndex = Math.max(0, ["low", "medium", "high", "extra", "max"].indexOf(scene.detail));
+    const density = [0.55, 0.8, 1, 1.18, 1.34][detailIndex];
     const rows = Array.from({ length: h }, () => Array.from({ length: w }, () => ({ glyph: " ", color: null, depth: -1 })));
     const enabled = (name) => scene.layers?.includes(name) ?? true;
     const put = (x, y, glyph, color, depth = 1) => {
@@ -66,13 +67,98 @@ function createSceneRenderer() {
       const progress = clamp((time - start) / Math.max(0.02, end - start), 0, 1);
       return (config?.easing ?? easing) === "ease-in" ? progress * progress : (config?.easing ?? easing) === "ease-out" ? easeOut(progress) : smooth(progress);
     };
+    const shapeColors = {
+      petal1: palette.petals[0], petal2: palette.petals[1], petal3: palette.petals[2], petal4: palette.petals[3],
+      leaf: palette.leaf, vein: palette.vein, light: palette.light, sky1: palette.sky[0], sky2: palette.sky[1],
+      water: palette.water, house: palette.house
+    };
+    const drawPrimitive = (shape, layer = 8) => {
+      let scale = 1;
+      let offsetX = 0;
+      let offsetY = 0;
+      const motionTime = time * Math.PI * 2;
+      if (shape.motion === "pulse") scale += 0.1 * Math.sin(motionTime);
+      if (shape.motion === "float") offsetY = Math.sin(motionTime) * h * 0.025;
+      if (shape.motion === "sway") offsetX = Math.sin(motionTime) * w * 0.025;
+      if (shape.motion === "orbit") {
+        offsetX = Math.cos(motionTime) * w * 0.035;
+        offsetY = Math.sin(motionTime) * h * 0.035;
+      }
+      const cx = (shape.x + shape.width / 2) * w + offsetX;
+      const cy = (shape.y + shape.height / 2) * h + offsetY;
+      const rx = shape.width * w * scale / 2;
+      const ry = shape.height * h * scale / 2;
+      const color = shapeColors[shape.color] || palette.petals[1];
+      const glyph = shape.glyph || "*";
+      if (shape.type === "line") {
+        line(cx - rx, cy - ry, cx + rx, cy + ry, glyph, color, layer);
+        return;
+      }
+      if (shape.type === "polyline") {
+        const points = shape.points || [];
+        for (let i = 1; i < points.length; i += 1) {
+          line(
+            (shape.x + points[i - 1][0] * shape.width) * w + offsetX,
+            (shape.y + points[i - 1][1] * shape.height) * h + offsetY,
+            (shape.x + points[i][0] * shape.width) * w + offsetX,
+            (shape.y + points[i][1] * shape.height) * h + offsetY,
+            glyph,
+            color,
+            layer
+          );
+        }
+        return;
+      }
+      const left = Math.max(0, Math.floor(cx - rx));
+      const right = Math.min(w - 1, Math.ceil(cx + rx));
+      const top = Math.max(0, Math.floor(cy - ry));
+      const bottom = Math.min(h - 1, Math.ceil(cy + ry));
+      for (let y = top; y <= bottom; y += 1) {
+        for (let x = left; x <= right; x += 1) {
+          const nx = (x - cx) / Math.max(1, rx);
+          const ny = (y - cy) / Math.max(1, ry);
+          let inside = false;
+          let edge = false;
+          if (shape.type === "rect") {
+            inside = Math.abs(nx) <= 1 && Math.abs(ny) <= 1;
+            edge = Math.abs(nx) > 0.86 || Math.abs(ny) > 0.82;
+          } else if (shape.type === "triangle") {
+            const halfWidth = (1 - (ny + 1) / 2);
+            inside = ny >= -1 && ny <= 1 && Math.abs(nx) <= halfWidth;
+            edge = inside && (Math.abs(nx) >= halfWidth - 0.12 || ny > 0.78);
+          } else if (shape.type === "heart") {
+            const heartY = -ny * 1.15;
+            const equation = (nx * nx + heartY * heartY - 1) ** 3 - nx * nx * heartY ** 3;
+            inside = equation <= 0;
+            edge = Math.abs(equation) < 0.48;
+          } else {
+            const distance = nx * nx + ny * ny;
+            inside = distance <= 1;
+            edge = distance > 0.73;
+          }
+          if (!inside) continue;
+          const highlight = nx < -0.24 && ny < -0.12;
+          const shadeGlyph = edge
+            ? (detailIndex === 0 ? glyph : detailIndex >= 4 && (x + y) % 4 === 0 ? "@" : ":")
+            : highlight
+              ? (detailIndex >= 3 && (x + y) % 3 === 0 ? "'" : ".")
+              : detailIndex >= 4
+                ? (Math.abs(nx + ny) < 0.25 ? "@" : (x + y) % 3 === 0 ? "#" : "+")
+                : detailIndex >= 2
+                  ? (Math.abs(nx + ny) < 0.3 ? "#" : "+")
+                  : glyph;
+          const shade = edge ? palette.petals[0] : highlight ? palette.petals[3] : color;
+          put(x, y, shadeGlyph, shade, layer + (edge ? 1 : 0));
+        }
+      }
+    };
     const close = 1 - smooth((time - 0.9) / 0.1);
     const centerX = w * 0.5;
     const groundY = h - 3;
     const wide = w / 100;
     const tall = h / 32;
 
-    if (enabled("background") && (motifSet.has("stars") || motifSet.has("flower") || motifSet.has("house") || motifSet.has("fireworks") || motifSet.has("ring"))) {
+    if (enabled("background") && (motifSet.has("stars") || motifSet.has("flower") || motifSet.has("heart") || motifSet.has("house") || motifSet.has("fireworks") || motifSet.has("ring"))) {
       const count = Math.round(clamp((scene.form?.stars?.stars ?? w * h / 100) * density, 10, 78));
       for (let i = 0; i < count; i += 1) {
         const depth = scene.form?.stars?.parts?.includes("depth") === false ? 0 : i % 3;
@@ -92,7 +178,7 @@ function createSceneRenderer() {
 
     if (enabled("background") && (motifSet.has("house") || motifSet.has("flower") || motifSet.has("waves"))) {
       const horizon = motifSet.has("waves") ? h - Math.max(6, Math.round(h * 0.25)) : groundY;
-      const count = Math.round(w * (scene.detail === "low" ? 0.025 : scene.detail === "medium" ? 0.045 : 0.065));
+      const count = Math.round(w * [0.025, 0.045, 0.065, 0.085, 0.1][detailIndex]);
       for (let i = 0; i < count; i += 1) {
         const x = hash(i, 3, 11) * w;
         const y = horizon + Math.round(hash(i, 5, 13) * 2);
@@ -100,9 +186,35 @@ function createSceneRenderer() {
       }
     }
 
+    if (motifSet.has("heart") && enabled("subject")) {
+      const form = scene.form?.heart || {};
+      const beat = phase("heart-beat", 0, 1);
+      const pulse = 1 + (0.09 * Math.sin(beat * Math.PI * 2) + 0.035 * Math.sin(beat * Math.PI * 4)) * close;
+      if (form.parts?.includes("body")) {
+        drawPrimitive({ type: "heart", x: 0.5 - 0.23 * pulse, y: 0.49 - 0.27 * pulse, width: 0.46 * pulse, height: 0.54 * pulse, color: "petal2", glyph: "@", motion: "none" }, 7);
+        drawPrimitive({ type: "heart", x: 0.5 - 0.19 * pulse, y: 0.49 - 0.22 * pulse, width: 0.38 * pulse, height: 0.44 * pulse, color: "petal3", glyph: "+", motion: "none" }, 8);
+      }
+      if (form.parts?.includes("shine")) {
+        drawPrimitive({ type: "heart", x: 0.5 - 0.12 * pulse, y: 0.49 - 0.12 * pulse, width: 0.24 * pulse, height: 0.24 * pulse, color: "petal4", glyph: ".", motion: "none" }, 9);
+      }
+      if (form.parts?.includes("sparkles")) {
+        const cx = w * 0.5;
+        const cy = h * 0.49;
+        for (let i = 0; i < [4, 7, 10, 14, 18][detailIndex]; i += 1) {
+          const angle = time * Math.PI * 2 + i * Math.PI * 2 / 10;
+          const radius = 0.27 + 0.035 * Math.sin(time * Math.PI * 2 + i);
+          put(cx + Math.cos(angle) * radius * w, cy + Math.sin(angle) * radius * h, i % 3 === 0 ? "+" : ".", palette.light, 10);
+        }
+      }
+    }
+
+    if (motifSet.has("custom") && enabled("subject")) {
+      for (const shape of scene.form?.custom?.shapes || []) drawPrimitive(shape, 8);
+    }
+
     if (motifSet.has("waves") && enabled("subject")) {
       const waveParts = scene.form?.waves?.parts || ["crests", "foam", "depth"];
-      const layers = waveParts.includes("depth") ? scene.detail === "low" ? 2 : scene.detail === "medium" ? 3 : 4 : 1;
+      const layers = waveParts.includes("depth") ? [2, 3, 4, 5, 6][detailIndex] : 1;
       const waveTime = phase("wave-flow", 0, 1) * Math.PI * 2;
       for (let layer = 0; layer < layers; layer += 1) {
         const base = h - 7 + layer * 1.45;
@@ -128,7 +240,7 @@ function createSceneRenderer() {
       const roofPeakY = Math.max(2, wallTop - Math.round(h * 0.22));
       const buildingColor = palette.house;
       const houseParts = scene.form?.house?.parts || ["roof", "walls", "door", "windows", "chimney"];
-      const roofGlyph = scene.detail === "low" ? "/" : "#";
+      const roofGlyph = ["/", "/", "#", "@", "#"][detailIndex];
       if (houseParts.includes("roof")) {
         curve(left - 2, wallTop + 1, roofPeakX, roofPeakY, (roofPeakX - left) * 0.15, roofGlyph, palette.petals[1], 3);
         curve(roofPeakX, roofPeakY, right + 2, wallTop + 1, (right - roofPeakX) * -0.15, "\\", palette.petals[1], 3);
@@ -138,8 +250,10 @@ function createSceneRenderer() {
         for (let y = wallTop + 2; y <= wallBottom; y += 1) {
           put(left, y, "|", buildingColor, 3);
           put(right, y, "|", buildingColor, 3);
-          if (scene.detail !== "low" && y % 3 === 0) {
-            for (let x = left + 2; x < right; x += 7) put(x, y, ".", palette.petals[0], 2);
+          if (detailIndex > 0 && y % (detailIndex >= 3 ? 2 : 3) === 0) {
+            for (let x = left + 2; x < right; x += detailIndex >= 4 ? 4 : detailIndex >= 3 ? 5 : 7) {
+              put(x, y, detailIndex >= 4 ? ":" : ".", palette.petals[0], 2);
+            }
           }
         }
         line(left, wallBottom, right, wallBottom, "_", buildingColor, 4);
@@ -164,7 +278,7 @@ function createSceneRenderer() {
         put(windowX + 1, windowY, "]", buildingColor, 5);
         put(windowX, windowY + 1, "|", buildingColor, 5);
       }
-      if (houseParts.includes("chimney") && scene.detail !== "low") {
+      if (houseParts.includes("chimney") && detailIndex > 0) {
         const chimneyX = right - 4;
         line(chimneyX, roofPeakY + 2, chimneyX, roofPeakY - 2, "|", buildingColor, 4);
         line(chimneyX + 3, roofPeakY + 2, chimneyX + 3, roofPeakY - 2, "|", buildingColor, 4);
@@ -236,8 +350,8 @@ function createSceneRenderer() {
           leafShape(stemBaseX + direction * offset * 0.12, level, direction, 5 + i % 2, i);
         }
       }
-      if (scene.detail === "high" && scene.form?.flower?.parts?.includes("thorns")) {
-        for (let i = 0; i < 3; i += 1) {
+      if (detailIndex >= 2 && scene.form?.flower?.parts?.includes("thorns")) {
+        for (let i = 0; i < [3, 3, 3, 4, 5][detailIndex]; i += 1) {
           const y = groundY - Math.round(h * (0.16 + i * 0.13));
           line(stemBaseX - 1, y, stemBaseX - 3, y - 1, "<", palette.leaf, 4);
         }
@@ -253,12 +367,18 @@ function createSceneRenderer() {
         const length = Math.max(0.8, radiusY * 1.35 * effective);
         const widthAcross = Math.max(0.5, radiusY * 0.26 * effective);
         const aspect = clamp((w / h) * 0.56, 1.25, 2.1);
-        const sides = scene.detail === "low" ? [-1, 0, 1] : [-1, -0.5, 0, 0.5, 1];
+        const sides = [
+          [-1, 0, 1],
+          [-1, -0.5, 0, 0.5, 1],
+          [-1, -0.5, 0, 0.5, 1],
+          [-1, -0.75, -0.5, 0, 0.5, 0.75, 1],
+          [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1]
+        ][detailIndex];
         for (let i = 0; i < lobes; i += 1) {
           const angle = (i / lobes) * Math.PI * 2 - Math.PI / 2 + colorOffset * Math.PI / (lobes * 2) + Math.sin(time * Math.PI * 2) * 0.035;
           const directionX = Math.cos(angle);
           const directionY = Math.sin(angle);
-          const points = Math.max(7, Math.round(length * 2.2));
+          const points = Math.max(7, Math.round(length * 2.2 * [1, 1.1, 1.25, 1.5, 1.75][detailIndex]));
           const petalColor = palette.petals[Math.min(3, colorOffset + 1)];
           const base = colorOffset === 0 ? 0.24 : colorOffset === 1 ? 0.18 : 0.1;
           for (let step = 0; step <= points; step += 1) {
@@ -325,9 +445,9 @@ function createSceneRenderer() {
           line(fx + Math.cos(angle) * 1.3, fy + 2, fx + Math.cos(angle) * 3.2, fy + 4, "v", stemColor, 10);
         }
       }
-      if (scene.detail !== "low" && inner > 0.25 && form.parts?.includes("stamens")) {
+      if (detailIndex > 0 && inner > 0.25 && form.parts?.includes("stamens")) {
         const center = palette.light;
-        const stamenCount = Math.max(3, Math.min(10, form.stamens ?? 7));
+        const stamenCount = Math.max(3, Math.min(14, Math.round((form.stamens ?? 7) * [0.55, 0.8, 1, 1.25, 1.5][detailIndex])));
         for (let i = 0; i < stamenCount; i += 1) {
           const angle = i / stamenCount * Math.PI * 2 + time * 0.16;
           const length = (1.1 + (i % 3) * 0.6) * inner;
@@ -359,12 +479,12 @@ function createSceneRenderer() {
       const angle = phase("ring-turn", 0, 1) * Math.PI * 2;
       const rx = Math.min(w * 0.24, h * 0.78);
       const ry = Math.min(h * 0.29, w * 0.13);
-      const facets = scene.form?.ring?.facets ?? 12;
-      const rings = scene.form?.ring?.rings ?? 2;
+      const facets = Math.min(28, Math.round((scene.form?.ring?.facets ?? 12) * [0.65, 0.85, 1, 1.2, 1.45][detailIndex]));
+      const rings = Math.min(5, (scene.form?.ring?.rings ?? 2) + [0, 0, 0, 1, 2][detailIndex]);
       const ringParts = scene.form?.ring?.parts || ["rings", "facets", "orbit"];
       for (let band = ringParts.includes("rings") ? rings - 1 : -1; band >= 0; band -= 1) {
         const scale = 1 - band * 0.14;
-        const points = Math.max(100, Math.round(w * 2.4));
+        const points = Math.max(100, Math.round(w * 2.4 * density));
         for (let i = 0; i <= points; i += 1) {
           const theta = i / points * Math.PI * 2;
           const facet = ringParts.includes("facets") ? Math.abs(Math.sin(theta * facets / 2 + angle * 2)) : 0.5;
@@ -381,7 +501,7 @@ function createSceneRenderer() {
         const hy = cy + Math.sin(highlight) * ry;
         put(hx, hy, "*", palette.light, 8);
       }
-      if (ringParts.includes("orbit") && scene.detail !== "low") {
+      if (ringParts.includes("orbit") && detailIndex > 0) {
         const orbAngle = -angle + Math.PI * 0.22;
         const ox = cx + Math.cos(orbAngle) * rx * 1.15;
         const oy = cy + Math.sin(orbAngle) * ry * 1.15;
@@ -393,7 +513,7 @@ function createSceneRenderer() {
     if (motifSet.has("fireworks") && enabled("particles")) {
       const fireworkParts = scene.form?.fireworks?.parts || ["bursts", "trails"];
       const bursts = fireworkParts.includes("bursts") ? Math.max(1, Math.min(4, scene.form?.fireworks?.bursts ?? 3)) : 0;
-      const rays = scene.detail === "low" ? 8 : scene.detail === "medium" ? 12 : scene.form?.fireworks?.rays ?? 16;
+      const rays = Math.min(28, Math.max(6, Math.round((scene.form?.fireworks?.rays ?? 16) * [0.55, 0.75, 1, 1.2, 1.4][detailIndex])));
       for (let burst = 0; burst < bursts; burst += 1) {
         const local = fract(phase("bursts", 0, 1) * 2 + burst / bursts);
         const expansion = Math.sin(local * Math.PI);
@@ -414,8 +534,19 @@ function createSceneRenderer() {
           } else {
             put(endX, endY, fade > 0.5 ? "*" : ".", color, 7);
           }
-          if (scene.detail === "high" && local < 0.75) {
+          if (detailIndex >= 2 && local < 0.75) {
             put(bx + Math.cos(theta) * radius * jitter * (w / h) * 0.45, by + Math.sin(theta) * radius * jitter * 0.56 + 1, ".", palette.light, 6);
+          }
+          const sparkCount = [0, 0, 1, 2, 3][detailIndex];
+          for (let spark = 0; spark < sparkCount; spark += 1) {
+            const sparkProgress = 0.3 + spark * 0.18;
+            put(
+              bx + Math.cos(theta) * radius * jitter * (w / h) * 0.58 * sparkProgress,
+              by + Math.sin(theta) * radius * jitter * 0.7 * sparkProgress,
+              spark % 2 ? "." : "'",
+              palette.light,
+              6
+            );
           }
         }
         put(bx, by, local < 0.7 ? "*" : ".", palette.light, 8);
@@ -424,7 +555,9 @@ function createSceneRenderer() {
 
     if (motifSet.has("smoke") && enabled("particles")) {
       const smokeParts = scene.form?.smoke?.parts || ["drift", "wisps"];
-      const wisps = smokeParts.includes("wisps") ? Math.min(scene.form?.smoke?.wisps ?? 8, scene.detail === "low" ? 4 : scene.detail === "medium" ? 7 : 12) : 1;
+      const wisps = smokeParts.includes("wisps")
+        ? Math.min(14, Math.round((scene.form?.smoke?.wisps ?? 8) * [0.5, 0.75, 1, 1.25, 1.5][detailIndex]))
+        : 1;
       const originY = motifSet.has("house") ? Math.round(h * 0.19) : h - 5;
       const smokeTime = phase("smoke-drift", 0, 1);
       for (let i = 0; i < wisps; i += 1) {
@@ -435,7 +568,10 @@ function createSceneRenderer() {
         const y = originY - rise;
         const glyph = i % 3 === 0 ? ":" : i % 3 === 1 ? ")" : "~";
         put(x, y, glyph, palette.sky[i % 2], 4);
-        if (smokeParts.includes("drift") && scene.detail !== "low") put(x + 1, y - 1, i % 2 ? "·" : "~", palette.sky[(i + 1) % 2], 3);
+        if (smokeParts.includes("drift") && detailIndex > 0) {
+          put(x + 1, y - 1, i % 2 ? "·" : "~", palette.sky[(i + 1) % 2], 3);
+          if (detailIndex >= 3) put(x - 1, y + 1, i % 2 ? "'" : ":", palette.sky[i % 2], 3);
+        }
       }
     }
 
@@ -448,7 +584,7 @@ function createSceneRenderer() {
     }
 
     if (enabled("particles") && motifSet.has("flower")) {
-      const count = Math.round((scene.detail === "low" ? 2 : scene.detail === "medium" ? 4 : 7) * density);
+      const count = Math.round([2, 4, 7, 10, 13][detailIndex] * density);
       for (let i = 0; i < count; i += 1) {
         const drift = Math.sin(time * Math.PI * 2 + i * 1.8);
         const x = centerX + Math.sin(time * Math.PI * 2 + i * 2.1) * (7 + i * 1.3) * wide;

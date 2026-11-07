@@ -1,10 +1,11 @@
-export const MOTIFS = ["flower", "ring", "fireworks", "stars", "smoke", "waves", "house"];
+export const MOTIFS = ["flower", "heart", "ring", "fireworks", "stars", "smoke", "waves", "house", "custom"];
 export const PALETTES = ["garden", "cosmic", "festival", "ocean", "ember", "phosphor", "amber", "ice"];
-export const DETAILS = ["low", "medium", "high"];
+export const DETAILS = ["low", "medium", "high", "extra", "max"];
 export const LAYERS = ["background", "subject", "foreground", "particles"];
 
 const words = {
   flower: /\b(rose|flower|bloom|petal|tulip|daisy|garden)\b/i,
+  heart: /\b(heart|hart|hearts|heartbeat)\b/i,
   ring: /\b(ring|orbit|planet|saturn|celestial)\b/i,
   fireworks: /\b(firework|fireworks|burst|sparkl|celebrat)\b/i,
   stars: /\b(star|stars|night|sky|twinkle|constellation|moon)\b/i,
@@ -15,27 +16,36 @@ const words = {
 
 const PARTS = [
   "stem-settle", "leaves-unfurl", "outer-petals", "middle-petals", "inner-petals",
-  "stamens", "ring-turn", "bursts", "window-light", "wave-flow", "smoke-drift"
+  "stamens", "ring-turn", "bursts", "window-light", "wave-flow", "smoke-drift", "heart-beat"
 ];
 const EASINGS = ["smooth", "ease-in", "ease-out"];
 const FORM_PARTS = {
   flower: ["outer-petals", "middle-petals", "inner-petals", "stamens", "stem", "leaves", "thorns"],
+  heart: ["body", "shine", "sparkles"],
   ring: ["rings", "facets", "orbit"],
   fireworks: ["bursts", "trails"],
   house: ["roof", "walls", "door", "windows", "chimney"],
   stars: ["stars", "depth"],
   smoke: ["drift", "wisps"],
-  waves: ["crests", "foam", "depth"]
+  waves: ["crests", "foam", "depth"],
+  custom: ["shapes"]
 };
+
+const SHAPE_TYPES = ["line", "rect", "ellipse", "triangle", "heart", "polyline"];
+const SHAPE_COLORS = ["petal1", "petal2", "petal3", "petal4", "leaf", "vein", "light", "sky1", "sky2", "water", "house"];
+const SHAPE_GLYPHS = [".", ":", "'", "-", "=", "+", "*", "#", "@", "/", "\\", "|", "_", "~", "o", "O", "x", "<", ">", "^", "v"];
+const SHAPE_MOTIONS = ["none", "pulse", "float", "sway", "orbit"];
 
 const DEFAULT_FORMS = {
   flower: { type: "rose", parts: FORM_PARTS.flower, outerPetals: 10, middlePetals: 8, innerPetals: 6, leaves: 3, stamens: 7 },
+  heart: { type: "heart", parts: FORM_PARTS.heart },
   ring: { type: "faceted", parts: ["rings", "facets", "orbit"], facets: 12, rings: 2 },
   fireworks: { type: "radial", parts: ["bursts", "trails"], bursts: 3, rays: 12 },
   house: { type: "cottage", parts: ["roof", "walls", "door", "windows", "chimney"], floors: 1, windows: 2 },
   stars: { type: "constellation", parts: ["stars", "depth"], stars: 24 },
   smoke: { type: "ribbon", parts: ["drift", "wisps"], wisps: 8 },
-  waves: { type: "tidal", parts: ["crests", "foam", "depth"], crests: 3 }
+  waves: { type: "tidal", parts: ["crests", "foam", "depth"], crests: 3 },
+  custom: { type: "illustration", parts: FORM_PARTS.custom, shapes: [] }
 };
 
 export const DEFAULT_PHASES = [
@@ -49,7 +59,8 @@ export const DEFAULT_PHASES = [
   { part: "bursts", start: 0.0, end: 1.0, easing: "smooth" },
   { part: "window-light", start: 0.0, end: 1.0, easing: "smooth" },
   { part: "wave-flow", start: 0.0, end: 1.0, easing: "smooth" },
-  { part: "smoke-drift", start: 0.0, end: 1.0, easing: "smooth" }
+  { part: "smoke-drift", start: 0.0, end: 1.0, easing: "smooth" },
+  { part: "heart-beat", start: 0.0, end: 1.0, easing: "smooth" }
 ];
 
 function cleanText(value, fallback, limit) {
@@ -77,6 +88,42 @@ function normalizeParts(value, fallback, motif) {
   return [...new Set(value.filter((part) => typeof part === "string" && FORM_PARTS[motif].includes(part)))].slice(0, 7);
 }
 
+function normalizeShapes(value) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 36) throw new Error("Custom illustrations must contain at most 36 shapes.");
+  return value.map((shape, index) => {
+    if (!shape || typeof shape !== "object" || Array.isArray(shape)) throw new Error("Each custom shape must be a JSON object.");
+    const allowed = new Set(["type", "x", "y", "width", "height", "points", "color", "glyph", "motion"]);
+    if (Object.keys(shape).some((key) => !allowed.has(key))) throw new Error("A custom shape contains unsupported fields.");
+    if (!SHAPE_TYPES.includes(shape.type)) throw new Error("A custom illustration uses an unsupported shape type.");
+    if (shape.type === "polyline" && (!Array.isArray(shape.points) || shape.points.length < 2 || shape.points.length > 12)) {
+      throw new Error("A custom polyline must have between 2 and 12 points.");
+    }
+    const points = shape.type === "polyline" ? shape.points.map((point) => {
+      if (!Array.isArray(point) || point.length !== 2) throw new Error("Each polyline point must be an [x, y] pair.");
+      return point.map((coordinate) => numberClamp(coordinate, 0.5, 0, 1, `shape ${index} point`));
+    }) : undefined;
+    const color = shape.color ?? "petal2";
+    const glyph = shape.glyph ?? "*";
+    const motion = shape.motion ?? "none";
+    if (!SHAPE_COLORS.includes(color)) throw new Error("A custom shape uses an unsupported palette color.");
+    if (!SHAPE_GLYPHS.includes(glyph)) throw new Error("A custom shape uses an unsupported terminal glyph.");
+    if (!SHAPE_MOTIONS.includes(motion)) throw new Error("A custom shape uses an unsupported motion.");
+    const result = {
+      type: shape.type,
+      x: numberClamp(shape.x, 0.5, 0, 1, `shape ${index} x`),
+      y: numberClamp(shape.y, 0.5, 0, 1, `shape ${index} y`),
+      width: numberClamp(shape.width, 0.12, 0.005, 0.8, `shape ${index} width`),
+      height: numberClamp(shape.height, 0.12, 0.005, 0.8, `shape ${index} height`),
+      color,
+      glyph,
+      motion
+    };
+    if (points) result.points = points;
+    return result;
+  });
+}
+
 function normalizeForm(value, motifs) {
   if (value === undefined) value = {};
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Scene form must be a JSON object.");
@@ -96,8 +143,15 @@ function normalizeForm(value, motifs) {
     result[motif] = { type: defaults.type, parts: normalizeParts(form.parts, defaults.parts, motif) };
     for (const [key, defaultValue] of Object.entries(defaults)) {
       if (key === "type" || key === "parts") continue;
+      if (key === "shapes") {
+        result[motif][key] = normalizeShapes(form[key]);
+        continue;
+      }
       const maximum = key === "outerPetals" || key === "middlePetals" ? 14 : key === "innerPetals" ? 12 : key === "leaves" ? 4 : key === "stamens" ? 10 : key === "facets" ? 20 : key === "rings" ? 3 : key === "bursts" ? 4 : key === "rays" ? 20 : key === "floors" ? 2 : key === "windows" ? 6 : key === "stars" ? 48 : key === "wisps" ? 14 : 5;
       result[motif][key] = integerClamp(form[key], defaultValue, 1, maximum, `${motif}.${key}`);
+    }
+    if (motif === "custom" && result[motif].shapes.length === 0) {
+      throw new Error("A custom illustration needs at least one safe shape.");
     }
   }
   return result;
@@ -140,8 +194,11 @@ function inferredPalette(prompt, motifs) {
 }
 
 export function composeOffline(prompt, detail = "high") {
-  const found = MOTIFS.filter((motif) => words[motif].test(prompt));
-  const motifs = found.length ? found.slice(0, 4) : ["stars"];
+  const found = MOTIFS.filter((motif) => words[motif]?.test(prompt));
+  const motifs = found.slice(0, 4);
+  if (!motifs.length) {
+    throw new Error("The offline composer does not know how to draw that subject yet. Choose an AI composer in Settings for custom subjects, or try a supported scene like a heart, rose, ring, fireworks, house, stars, smoke, or waves.");
+  }
   const title = cleanText(prompt, "A little daydream", 48).replace(/[.!?].*$/, "").slice(0, 42) || "A little daydream";
   return validateScene({
     version: 2,
@@ -205,5 +262,7 @@ export function parseSceneResponse(text) {
 export const DETAIL_EXAMPLES = Object.freeze({
   low: composeOffline("A rose opening under a starry sky", "low"),
   medium: composeOffline("A rose opening under a starry sky", "medium"),
-  high: composeOffline("A rose opening under a starry sky", "high")
+  high: composeOffline("A rose opening under a starry sky", "high"),
+  extra: composeOffline("A rose opening under a starry sky", "extra"),
+  max: composeOffline("A rose opening under a starry sky", "max")
 });
