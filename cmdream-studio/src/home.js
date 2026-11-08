@@ -50,13 +50,3 @@ function animate(now) {
   if (!reducedMotion) requestAnimationFrame(animate);
 }
 requestAnimationFrame(animate);
-
-document.querySelectorAll("[data-release-link]").forEach((link) => {
-  link.addEventListener("click", (event) => {
-    const url = new URL(link.href);
-    if (url.pathname.includes("YOUR-GITHUB-USERNAME")) {
-      event.preventDefault();
-      window.alert("Add your GitHub username in index.html to activate the latest-release download link.");
-    }
-  });
-});

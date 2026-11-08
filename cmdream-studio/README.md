@@ -76,7 +76,7 @@ Render only hosts the public static site; it does not host an Ollama server or r
 
 ### Point the download buttons at your GitHub repository
 
-Before deploying, replace `YOUR-GITHUB-USERNAME` in `index.html` and `studio.html` with the GitHub owner or organization name for your repository. The website buttons then lead to that repository's latest GitHub Release and the workspace setup guide points to its README.
+The website's download buttons link to the releases page for [`official-mano/cmdream-studio`](https://github.com/official-mano/cmdream-studio/releases), and the workspace setup guide links to this repository's README. GitHub currently needs a published release before downloadable desktop builds appear; push a version tag as described below to trigger the build and create one.
 
 ## Desktop release builds
 
