@@ -4,7 +4,7 @@
 
 CMDream Studio turns a plain-language animation idea into a small, validated JSON scene plan, then draws every frame with a fixed ASCII renderer. The model never returns executable code, and model output is never evaluated or executed.
 
-The repository contains a public-facing website and animation workspace (`index.html` and `studio.html`) plus an Electron desktop app. The website is a static site; the desktop app adds a tightly scoped local Ollama bridge.
+The repository contains a public-facing website, animation workspace (`studio.html`), download center (`downloads.html`), user guide (`guide.html`), and account page, plus an Electron desktop app. The website is static; the download center reads the bundled `src/product-info.json` catalog and links directly to the configured public file host. It does not call GitHub for product or release data. The desktop app adds a tightly scoped local Ollama bridge.
 
 ## What it does
 
@@ -65,35 +65,55 @@ Select a provider in **Settings**, enter its model ID / deployment and endpoint 
 
 Do not use a shared/public computer for a cloud key. Remove/revoke any key you no longer want to use.
 
+## Accounts and optional scene sync
+
+Accounts are optional. Without Supabase configuration, the offline composer, local history, and desktop app continue to work; account sign-in is unavailable.
+
+1. Create a Supabase project and run `supabase/migrations/20261108190000_user_scenes.sql` in its SQL editor.
+2. In Supabase Auth, set the site URL to your actual hosted site and add that origin plus `/account.html` to the allowed redirect URLs. Set up email confirmation and a working SMTP provider before enabling public sign-up. Review Supabase's authentication rate limits before opening sign-up publicly.
+3. Configure the site's build environment with `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (the Supabase publishable/anon key only), and `VITE_PUBLIC_SITE_URL`. Never use the service-role key in the site or desktop app. For local development, copy `.env.example` to `.env.local` and fill in the same values.
+
+The Supabase database uses row-level security so authenticated users can access only their own scene rows. The app syncs at most 100 scenes. Passwords and auth tokens are handled by Supabase; synced scene prompts and scene JSON are stored there, but provider API keys are never included. If an account service is not configured, this does not disable offline use.
+
+For desktop builds produced by GitHub Actions, add the same three **public configuration values** under repository **Settings → Secrets and variables → Actions → Variables** with the exact names above. These values are compiled into the app; do not put a Supabase service-role/secret key in any variable or secret.
+
+## Publish desktop downloads to Cloudflare R2
+
+The website's version, notes, file names, sizes, checksums, and URLs come from `src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
+
+1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads. Keep write credentials private.
+2. Update `version` in `package.json`, the matching file names/version and release notes in `src/product-info.json`, then commit and push. A matching `v*` tag triggers the desktop builds.
+3. From GitHub Actions, download the `windows-downloads` and `linux-downloads` artifacts for the same workflow run. They are build artifacts for the repository owner, not public product downloads. Put all five `.exe` and `.AppImage` files in `cmdream-studio/release/`.
+4. In a local PowerShell session, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, and `R2_PUBLIC_BASE_URL` as environment variables. Use an R2 token scoped to the target bucket with object read/write permission. Do not paste credentials into chat, commit them, or set them as public Vite variables.
+5. From `cmdream-studio/`, run `npm run publish:downloads`. The script validates the artifacts, uploads them under versioned object keys, computes SHA-256 checksums, and updates `src/product-info.json`. Review and commit that JSON file, then let Render deploy the updated website. It prints no secrets.
+
+The uploader expects the complete Windows x64, Windows ARM64, and Linux x86_64 package set. It may leave already uploaded objects in R2 if a later upload fails; the site catalog is updated only after all uploads finish. Re-running the command safely replaces the same versioned object keys. Direct downloads are served by the configured R2 public domain—not by GitHub.
+
 ## Deploy the website on Render
 
-1. Create a GitHub repository named **`cmdream-studio`** and upload this repository's files to its root.
-2. In Render, choose **New → Blueprint**, connect the GitHub repository, and approve the `render.yaml` static-site configuration. You can also create a **Static Site** manually with build command `npm ci --include=dev && npm run build` and publish directory `dist`.
-3. Render builds the Vite website and shows the service's public URL in its dashboard. It will normally look like `https://cmdream-studio.onrender.com`; Render assigns the exact `onrender.com` hostname, and may add a suffix if that name is already taken. Use the actual URL shown by Render.
-4. To connect a custom domain **you control**, open the static site's **Settings → Custom Domains** in Render, add the hostname, then add the DNS records Render displays at your domain registrar/DNS provider. Wait for DNS verification and TLS certificate provisioning. Keep the `onrender.com` address as a working fallback.
+1. Keep the repository-root `.github/workflows/`, `render.yaml`, and `cmdream-studio/` layout. In Render, choose **New → Blueprint** and connect the repository, or create a Static Site manually with root directory `cmdream-studio`, build command `npm ci --include=dev && npm run build`, and publish directory `dist`.
+2. Configure the Supabase build environment variables above if you want sign-in enabled. The site can also build without them; account sync will remain unavailable.
+3. Render assigns and displays the site's public URL in its dashboard, typically an `onrender.com` hostname. The exact hostname depends on availability; use the actual value shown in Render for `VITE_PUBLIC_SITE_URL` and Supabase redirect configuration. Redeploy after changing build-time variables.
+4. To use a custom domain you control, open the static site's **Settings → Custom Domains**, add the hostname, and follow the DNS and TLS instructions Render provides.
 
-Render only hosts the public static site; it does not host an Ollama server or receive AI provider keys.
-
-### Point the download buttons at your GitHub repository
-
-The website's download buttons link to the releases page for [`official-mano/cmdream-studio`](https://github.com/official-mano/cmdream-studio/releases), and the workspace setup guide links to this repository's README. GitHub currently needs a published release before downloadable desktop builds appear; push a version tag as described below to trigger the build and create one.
+Render hosts the public site, not an Ollama server. A Render-hosted site cannot connect to Ollama running on a visitor's computer. Ollama support is desktop-only.
 
 ## Desktop release builds
 
-In this GitHub repository, the app is in the `cmdream-studio/` subfolder, so GitHub Actions must be at the repository root in `.github/workflows/desktop-builds.yml`. The workflow runs the app's build commands from that subfolder and builds:
+The app is in the `cmdream-studio/` subfolder, so GitHub Actions is at `.github/workflows/desktop-builds.yml`. It runs the app's build commands and builds:
 
-- Windows installer `.exe` (NSIS)
-- Portable Windows `.exe`
-- Linux `.AppImage`
+- Windows x64 and ARM64 installers `.exe` (NSIS)
+- Portable Windows x64 and ARM64 `.exe`
+- Linux x86_64 `.AppImage`
 
-To publish a release, update the `version` in `cmdream-studio/package.json`, commit and push that change, then tag that commit with the matching version:
+Update the package version and catalog release notes, commit and push, then tag that commit:
 
 ```sh
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
-Pushing a `v*` tag runs the Windows and Linux builds, creates a GitHub Release, and attaches the three files. A manual run from **Actions → Build desktop downloads → Run workflow** builds downloadable workflow artifacts without publishing a release. The website's latest-release link becomes useful once a release exists.
+Pushing a `v*` tag runs the Windows and Linux builds and uploads workflow artifacts for the repository. It does not create GitHub Releases and is not the public download host. Run the R2 publishing steps above to make website downloads available.
 
 The generated Windows installers are not code-signed. Windows may show a SmartScreen warning until you sign builds with a certificate you control.
 
@@ -115,21 +135,23 @@ Detail is selectable in the workspace and saved into each scene plan:
 
 These are complete, validated scene plans for the same rose prompt; only their `detail` field differs. The same shared levels are available for every built-in and custom subject. They can be inspected with `DETAIL_EXAMPLES` in the source or composed in the workspace at each setting.
 
-Scene history is stored in the browser's local storage on that device. Provider credentials and settings are not persisted.
+Scene history and non-secret provider preferences (selected composer, model IDs, endpoints, and API version) are stored in local browser storage on that device. API keys are held in memory only and are never stored. In the desktop app, Chromium's application profile keeps this local data between launches; uninstalling the app may remove application data depending on the uninstall option used.
 
 ## Repository
 
 ```text
 repository-root/
 ├── .github/workflows/desktop-builds.yml  # GitHub Actions; must be at this level
+├── render.yaml                 # Render Blueprint; app root is cmdream-studio/
 └── cmdream-studio/
     ├── electron/               # Desktop shell and local Ollama bridge
     ├── src/                    # Fixed renderer, scene contract, provider adapters, UI
     ├── tests/
     ├── index.html              # Public-facing landing page
     ├── studio.html             # Animation workspace
+    ├── downloads.html          # Product catalog and direct file-host links
+    ├── guide.html              # User documentation and project status
     ├── package.json
-    ├── render.yaml
     └── vite.config.js
 ```
 

@@ -7,14 +7,12 @@
     <meta name="description" content="Describe an animation. Watch it come alive in looping command-line art.">
     <title>CMDream Studio — Command-line art in motion.</title>
     <link rel="icon" type="image/png" href="./assets/cmdream-icon.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="site-page">
     <header class="site-header">
       <a class="brand" href="./"><span class="brand-mark">C<span>M</span></span><span>CMDream<span class="brand-light"> Studio</span></span></a>
-      <nav class="site-nav"><a href="#how">How it works</a><a href="#models">AI options</a><a href="#downloads">Downloads</a></nav>
+      <nav class="site-nav" aria-label="Main navigation"><a href="#how">How it works</a><a href="#models">AI options</a><a href="./guide.html">Documentation</a><a href="./downloads.html">Download center</a></nav>
+      <a class="button button-quiet" href="./account.html">Account</a>
       <a class="button button-quiet" href="./studio.html">Open the studio ↗</a>
     </header>
     <main>
@@ -58,9 +56,9 @@
           <article class="option-card option-card-featured"><div class="option-top"><span class="option-icon">⌂</span><span class="option-badge">YOUR MACHINE</span></div><h3>Ollama, close to home</h3><p>Connect an Ollama model on your computer. Prompts stay local. Desktop app required for reliable localhost access.</p><span class="option-foot">LOCAL MODEL <i>·</i> DESKTOP APP</span></article>
           <article class="option-card"><div class="option-top"><span class="option-icon">✳</span><span class="option-badge">YOUR PROVIDER</span></div><h3>Bring your own key</h3><p>Connect OpenAI, Anthropic, Gemini, Azure OpenAI, or an OpenAI-compatible endpoint in Settings.</p><span class="option-foot">OPTIONAL CLOUD <i>·</i> KEY IN MEMORY ONLY</span></article>
         </div>
-        <p class="privacy-note"><span>⌑</span> Cloud prompts and your API key are sent directly to your chosen provider. CMDream does not store keys. Read <a href="./studio.html#privacy">the privacy notes</a> before connecting a provider.</p>
+        <p class="privacy-note"><span>⌑</span> Cloud prompts and your API key are sent directly to your chosen provider. CMDream does not store keys. Read <a href="./guide.html#ai">the privacy notes</a> before connecting a provider.</p>
       </section>
-      <section class="download-section" id="downloads"><div class="wrap download-wrap"><div><div class="eyebrow"><span class="status-dot"></span> Bring the studio along</div><h2>Make room<br>for a daydream.</h2><p>Run it in your browser, or take the desktop app for Windows and Linux. Your first scene is already waiting.</p><div class="download-actions"><a class="button button-primary" data-release-link href="https://github.com/official-mano/cmdream-studio/releases">Windows installer EXE ↗</a><a class="button button-quiet" data-release-link href="https://github.com/official-mano/cmdream-studio/releases">Portable Windows EXE ↗</a><a class="button button-quiet" data-release-link href="https://github.com/official-mano/cmdream-studio/releases">Linux AppImage ↗</a><a class="text-link text-link-light" href="./studio.html">Open the web studio →</a></div><span class="download-foot">OPEN GITHUB RELEASES TO DOWNLOAD A BUILD · DESKTOP BUILDS APPEAR AFTER A VERSION TAG IS PUSHED</span></div><div class="download-visual"><pre aria-hidden="true">       .     .            *
+      <section class="download-section" id="downloads"><div class="wrap download-wrap"><div><div class="eyebrow"><span class="status-dot"></span> Bring the studio along</div><h2>Make room<br>for a daydream.</h2><p>Run it in your browser, or take the desktop app for Windows and Linux. Your first scene is already waiting.</p><div class="download-actions"><a class="button button-primary" data-release-kind="windows-x64-installer" href="./downloads.html">Windows x64 installer</a><a class="button button-quiet" data-release-kind="windows-arm64-installer" href="./downloads.html">Windows ARM64 installer</a><a class="button button-quiet" data-release-kind="linux-x64-appimage" href="./downloads.html">Linux AppImage</a><a class="text-link text-link-light" href="./downloads.html">All downloads &amp; requirements →</a><a class="text-link text-link-light" href="./studio.html">Open the web studio →</a></div><span class="download-foot" id="home-release-status" role="status" aria-live="polite">CMDream Studio 1.1.0 · Product details are built into this website.</span></div><div class="download-visual"><pre aria-hidden="true">       .     .            *
         .     *        .       .    .       *
        /|\     .            .          /\
       / | \  ✦       .                 /  \
@@ -78,7 +76,7 @@
       ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 </pre><div class="visual-caption">YOUR IMAGINATION, RENDERED IN TEXT</div></div></div></section>
     </main>
-    <footer class="site-footer"><a class="brand" href="./"><span class="brand-mark">C<span>M</span></span><span>CMDream<span class="brand-light"> Studio</span></span></a><span>Command-line art in motion.</span><a href="./studio.html">Go make a scene ↗</a><span>MADE FOR THE MOMENT BETWEEN PROMPT AND PLAY.</span></footer>
+    <footer class="site-footer"><a class="brand" href="./"><span class="brand-mark">C<span>M</span></span><span>CMDream<span class="brand-light"> Studio</span></span></a><span>Command-line art in motion.</span><a href="./guide.html">Documentation</a><a href="./downloads.html">Downloads</a><a href="./account.html">Account</a><a href="./studio.html">Go make a scene ↗</a><span>© 2026 CMDREAM STUDIO CONTRIBUTORS · MIT LICENSE</span></footer>
     <script type="module" src="/src/home.js"></script>
   </body>
 </html>

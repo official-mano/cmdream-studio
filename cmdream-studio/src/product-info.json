@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "releaseDate": "",
+  "releaseNotes": [
+    "Account sign-in and optional synced scene history.",
+    "Dedicated product guide and platform-specific download center.",
+    "Windows x64 and ARM64 builds, plus Linux x86_64 AppImage."
+  ],
+  "downloads": [
+    {
+      "id": "windows-x64-installer",
+      "platform": "Windows",
+      "architecture": "x64",
+      "package": "Installer",
+      "fileName": "CMDream-Studio-1.1.0-Setup-x64.exe",
+      "url": "",
+      "sizeBytes": null,
+      "sha256": ""
+    },
+    {
+      "id": "windows-x64-portable",
+      "platform": "Windows",
+      "architecture": "x64",
+      "package": "Portable app",
+      "fileName": "CMDream-Studio-1.1.0-Portable-x64.exe",
+      "url": "",
+      "sizeBytes": null,
+      "sha256": ""
+    },
+    {
+      "id": "windows-arm64-installer",
+      "platform": "Windows",
+      "architecture": "ARM64",
+      "package": "Installer",
+      "fileName": "CMDream-Studio-1.1.0-Setup-arm64.exe",
+      "url": "",
+      "sizeBytes": null,
+      "sha256": ""
+    },
+    {
+      "id": "windows-arm64-portable",
+      "platform": "Windows",
+      "architecture": "ARM64",
+      "package": "Portable app",
+      "fileName": "CMDream-Studio-1.1.0-Portable-arm64.exe",
+      "url": "",
+      "sizeBytes": null,
+      "sha256": ""
+    },
+    {
+      "id": "linux-x64-appimage",
+      "platform": "Linux",
+      "architecture": "x86_64",
+      "package": "AppImage",
+      "fileName": "CMDream-Studio-1.1.0-x64.AppImage",
+      "url": "",
+      "sizeBytes": null,
+      "sha256": ""
+    }
+  ]
+}

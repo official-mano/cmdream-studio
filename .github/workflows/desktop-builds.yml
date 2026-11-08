@@ -23,7 +23,12 @@ jobs:
         working-directory: cmdream-studio
       - run: npm test
         working-directory: cmdream-studio
-      - run: npm run dist:windows
+      - name: Build Windows installer and portable packages
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_SITE_URL: ${{ vars.VITE_PUBLIC_SITE_URL }}
+        run: npm run dist:windows
         working-directory: cmdream-studio
       - uses: actions/upload-artifact@v4
         with:
@@ -47,7 +52,12 @@ jobs:
         working-directory: cmdream-studio
       - run: npm test
         working-directory: cmdream-studio
-      - run: npm run dist:linux
+      - name: Build Linux AppImage
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_SITE_URL: ${{ vars.VITE_PUBLIC_SITE_URL }}
+        run: npm run dist:linux
         working-directory: cmdream-studio
       - uses: actions/upload-artifact@v4
         with:
@@ -55,29 +65,3 @@ jobs:
           path: cmdream-studio/release/*.AppImage
           if-no-files-found: error
           retention-days: 14
-
-  publish:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, linux]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: "*-downloads"
-          path: release-files
-          merge-multiple: true
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ github.ref_name }}
-        run: |
-          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
-            gh release upload "$TAG_NAME" release-files/* --clobber
-          else
-            gh release create "$TAG_NAME" release-files/* --title "$TAG_NAME" --generate-notes
-          fi
