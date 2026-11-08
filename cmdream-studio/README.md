@@ -80,13 +80,13 @@ The website's download buttons link to the releases page for [`official-mano/cmd
 
 ## Desktop release builds
 
-GitHub Actions in `.github/workflows/desktop-builds.yml` builds:
+In this GitHub repository, the app is in the `cmdream-studio/` subfolder, so GitHub Actions must be at the repository root in `.github/workflows/desktop-builds.yml`. The workflow runs the app's build commands from that subfolder and builds:
 
 - Windows installer `.exe` (NSIS)
 - Portable Windows `.exe`
 - Linux `.AppImage`
 
-To publish a release, update the `version` in `package.json`, commit and push that change, then tag that commit with the matching version:
+To publish a release, update the `version` in `cmdream-studio/package.json`, commit and push that change, then tag that commit with the matching version:
 
 ```sh
 git tag v1.0.1
@@ -120,16 +120,17 @@ Scene history is stored in the browser's local storage on that device. Provider 
 ## Repository
 
 ```text
-cmdream-studio/
-├── .github/workflows/desktop-builds.yml
-├── electron/                 # Desktop shell and local Ollama bridge
-├── src/                      # Fixed renderer, scene contract, provider adapters, UI
-├── tests/
-├── index.html                # Public-facing landing page
-├── studio.html               # Animation workspace
-├── package.json
-├── render.yaml
-└── vite.config.js
+repository-root/
+├── .github/workflows/desktop-builds.yml  # GitHub Actions; must be at this level
+└── cmdream-studio/
+    ├── electron/               # Desktop shell and local Ollama bridge
+    ├── src/                    # Fixed renderer, scene contract, provider adapters, UI
+    ├── tests/
+    ├── index.html              # Public-facing landing page
+    ├── studio.html             # Animation workspace
+    ├── package.json
+    ├── render.yaml
+    └── vite.config.js
 ```
 
 ## License
