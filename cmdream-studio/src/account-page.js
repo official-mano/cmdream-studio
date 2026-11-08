@@ -31,7 +31,7 @@ function updateSession(nextSession) {
 try {
   client = createSupabaseClient();
   if (!client) {
-    showNotice("Accounts are not configured on this website yet. Set the Supabase URL and publishable key in the site host settings.", "error");
+    showNotice("Account service is not configured for this app. Offline scenes still work; sign-in and sync need the account service enabled.", "error");
     form.querySelectorAll("input,button").forEach((element) => { element.disabled = true; });
   } else {
     watchAuthState(client, (nextSession, error, event) => {

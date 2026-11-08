@@ -16,6 +16,7 @@ The repository contains a public-facing website, animation workspace (`studio.ht
 - Use a local Ollama model from the desktop app.
 - Optionally connect OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, or an OpenAI-compatible provider.
 - Preview, pause, restart, seek, change playback speed, revisit recent scenes, and export scene JSON or standalone HTML.
+- Use the Windows/macOS/Linux desktop app's native menus to move between the workspace, account, downloads, and documentation.
 - Inspect the validated scene plan before exporting it.
 - Explore six live, max-detail renderer examples on the homepage; their grids adapt to the available card size and respect reduced-motion preferences.
 
@@ -73,7 +74,7 @@ Accounts are optional. Without Supabase configuration, the offline composer, loc
 2. In Supabase Auth, set the site URL to your actual hosted site and add that origin plus `/account.html` to the allowed redirect URLs. Set up email confirmation and a working SMTP provider before enabling public sign-up. Review Supabase's authentication rate limits before opening sign-up publicly.
 3. Configure the site's build environment with `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (the Supabase publishable/anon key only), and `VITE_PUBLIC_SITE_URL`. Never use the service-role key in the site or desktop app. For local development, copy `.env.example` to `.env.local` and fill in the same values.
 
-The Supabase database uses row-level security so authenticated users can access only their own scene rows. The app syncs at most 100 scenes. Passwords and auth tokens are handled by Supabase; synced scene prompts and scene JSON are stored there, but provider API keys are never included. If an account service is not configured, this does not disable offline use.
+The Supabase database uses row-level security so authenticated users can access only their own scene rows. The app syncs at most 100 scenes. Passwords and auth tokens are handled by Supabase; synced scene prompts and scene JSON are stored there, but provider API keys are never included. If an account service is not configured for the web and desktop builds, sign-in/sign-up is unavailable; this does not disable offline use.
 
 For desktop builds produced by GitHub Actions, add the same three **public configuration values** under repository **Settings → Secrets and variables → Actions → Variables** with the exact names above. These values are compiled into the app; do not put a Supabase service-role/secret key in any variable or secret.
 
@@ -81,13 +82,13 @@ For desktop builds produced by GitHub Actions, add the same three **public confi
 
 The website's version, notes, file names, sizes, checksums, and URLs come from `src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
 
-1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads. Keep write credentials private.
+1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads. Keep write credentials private. Until this setup is complete and the product catalog has public URLs, the download buttons remain unavailable.
 2. Update `version` in `package.json`, the matching file names/version and release notes in `src/product-info.json`, then commit and push. A matching `v*` tag triggers the desktop builds.
 3. From GitHub Actions, download the `windows-downloads` and `linux-downloads` artifacts for the same workflow run. They are build artifacts for the repository owner, not public product downloads. Put all five `.exe` and `.AppImage` files in `cmdream-studio/release/`.
 4. In a local PowerShell session, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, and `R2_PUBLIC_BASE_URL` as environment variables. Use an R2 token scoped to the target bucket with object read/write permission. Do not paste credentials into chat, commit them, or set them as public Vite variables.
 5. From `cmdream-studio/`, run `npm run publish:downloads`. The script validates the artifacts, uploads them under versioned object keys, computes SHA-256 checksums, and updates `src/product-info.json`. Review and commit that JSON file, then let Render deploy the updated website. It prints no secrets.
 
-The uploader expects the complete Windows x64, Windows ARM64, and Linux x86_64 package set. It may leave already uploaded objects in R2 if a later upload fails; the site catalog is updated only after all uploads finish. Re-running the command safely replaces the same versioned object keys. Direct downloads are served by the configured R2 public domain—not by GitHub.
+The uploader publishes every expected package it finds and skips missing builds, so Windows downloads can be published before the Linux AppImage is available. The catalog explicitly leaves skipped packages unavailable for that version. It may leave already uploaded objects in R2 if a later upload fails; the site catalog is updated only after all present uploads finish. Re-running the command safely replaces the same versioned object keys. Direct downloads are served by the configured R2 public domain—not by GitHub.
 
 ## Deploy the website on Render
 

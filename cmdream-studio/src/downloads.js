@@ -7,7 +7,7 @@ const date = document.querySelector("#release-date");
 const notes = document.querySelector("#release-notes");
 
 function disableDownload(link, message) {
-  link.textContent = "Download not configured";
+  link.textContent = "Unavailable";
   link.removeAttribute("href");
   link.setAttribute("aria-disabled", "true");
   link.closest(".release-card").querySelector("[data-file-info]").textContent = message;
@@ -15,6 +15,7 @@ function disableDownload(link, message) {
 
 try {
   const productInfo = loadProductInfo();
+  let availableDownloads = 0;
   version.textContent = `CMDream Studio ${productInfo.version}`;
   if (productInfo.releaseDate) {
     const releaseDate = new Date(`${productInfo.releaseDate}T00:00:00`);
@@ -30,16 +31,19 @@ try {
     const download = findDownload(productInfo, card.dataset.asset);
     const link = card.querySelector("[data-download]");
     if (!download || !download.url) {
-      disableDownload(link, download ? "No installer has been published for this package yet." : "This package is not in the current product catalog.");
+      disableDownload(link, download ? "This build has not been published yet." : "This package is not in the current product catalog.");
       return;
     }
+    availableDownloads += 1;
     link.href = download.url;
     link.removeAttribute("aria-disabled");
     link.textContent = `Download ${download.package}`;
     card.querySelector("[data-file-info]").textContent =
       `${download.fileName} · ${formatFileSize(download.sizeBytes)}${download.sha256 ? ` · SHA-256 ${download.sha256}` : ""}`;
   });
-  status.textContent = "Version and availability are read from CMDream Studio’s product catalog. Downloads open the configured file host.";
+  status.textContent = availableDownloads
+    ? `${availableDownloads} download${availableDownloads === 1 ? "" : "s"} available. Links open CMDream Studio’s configured file host.`
+    : "Downloads are not available yet. The release files must be uploaded to CMDream Studio’s file host before these buttons can work.";
 } catch (error) {
   version.textContent = "Product information unavailable";
   date.textContent = "";

@@ -1,5 +1,80 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("node:path");
+
+app.setName("CMDream Studio");
+
+let mainWindow;
+
+function openPage(fileName) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.loadFile(path.join(__dirname, "..", "dist", fileName));
+  }
+}
+
+function installApplicationMenu() {
+  const template = [
+    {
+      label: "File",
+      submenu: [
+        { label: "Home", click: () => openPage("index.html") },
+        { label: "Animation workspace", click: () => openPage("studio.html") },
+        { type: "separator" },
+        { label: "Account and scene sync", click: () => openPage("account.html") },
+        { label: "Downloads", click: () => openPage("downloads.html") },
+        { label: "Documentation", click: () => openPage("guide.html") },
+        { type: "separator" },
+        process.platform === "darwin" ? { role: "close" } : { role: "quit" }
+      ]
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" }
+      ]
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        ...(!app.isPackaged ? [{ role: "toggleDevTools" }] : []),
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { role: "togglefullscreen" }
+      ]
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "close" }]
+    }
+  ];
+
+  if (process.platform === "darwin") {
+    template.unshift({
+      label: app.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" }
+      ]
+    });
+  }
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 function cloudEndpoint(provider, value) {
   let url;
@@ -105,13 +180,14 @@ ipcMain.handle("ollama:generate", async (_event, input = {}) => {
 });
 
 function createWindow() {
-  const window = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1440,
     height: 980,
     minWidth: 850,
     minHeight: 650,
     backgroundColor: "#0a0e0e",
-    title: "CMDream Studio",
+    title: `${app.name} — Animation Studio`,
+    icon: path.join(__dirname, "..", "assets", process.platform === "win32" ? "cmdream-icon.ico" : "cmdream-icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -119,10 +195,14 @@ function createWindow() {
       sandbox: true
     }
   });
-  window.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+  mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
 app.whenReady().then(() => {
+  installApplicationMenu();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

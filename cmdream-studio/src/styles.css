@@ -168,6 +168,7 @@ button { color: inherit; }
 .product-footer a:not(.brand) { color: #a9c5ae; }
 .guide-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 58px; padding-bottom: 90px; }
 .guide-index { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; padding: 12px; border: 1px solid #202c25; border-radius: 6px; background: #0d1410; }
+.guide-index a[aria-current="location"] { border-color: #344c39; background: #142019; color: #b7d8bd; }
 .guide-index a { padding: 8px; border-radius: 4px; color: #97a49a; font-size: 10px; }
 .guide-index a:hover { background: #152019; color: var(--green); }
 .guide-content { min-width: 0; }

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { createCatalogDownloads } from "./download-manifest.js";
 
 const appDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const metadataPath = path.join(appDirectory, "src", "product-info.json");
@@ -66,12 +67,16 @@ for (const item of expectedDownloads) {
     fileInfo = await stat(filePath);
   } catch (error) {
     if (error.code === "ENOENT") {
-      throw new Error(`Missing ${item.fileName}. Build all Windows architectures and Linux x64, then place the release artifacts in ${releaseDirectory}.`);
+      process.stdout.write(`Skipping ${item.fileName}: artifact not found.\n`);
+      continue;
     }
     throw error;
   }
   if (!fileInfo.isFile() || fileInfo.size < 1024) throw new Error(`${item.fileName} is not a valid release file.`);
   assets.push({ ...item, filePath, sizeBytes: fileInfo.size, sha256: await checksumFile(filePath) });
+}
+if (!assets.length) {
+  throw new Error(`No release files were found in ${releaseDirectory}. Build at least one Windows or Linux package before publishing.`);
 }
 
 const client = new S3Client({
@@ -110,16 +115,7 @@ try {
   const productInfo = JSON.parse(await readFile(metadataPath, "utf8"));
   productInfo.version = version;
   productInfo.releaseDate = new Date().toISOString().slice(0, 10);
-  productInfo.downloads = assets.map((asset) => ({
-    id: asset.id,
-    platform: asset.platform,
-    architecture: asset.architecture,
-    package: asset.package,
-    fileName: asset.fileName,
-    url: `${publicBaseUrl}/releases/v${version}/${asset.fileName.split("/").map(encodeURIComponent).join("/")}`,
-    sizeBytes: asset.sizeBytes,
-    sha256: asset.sha256
-  }));
+  productInfo.downloads = createCatalogDownloads(expectedDownloads, assets, version, publicBaseUrl);
   const temporaryPath = `${metadataPath}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(productInfo, null, 2)}\n`, { flag: "w" });
   await rename(temporaryPath, metadataPath);
@@ -128,4 +124,5 @@ try {
 }
 
 console.log(`\nPublished ${assets.length} downloads to Cloudflare R2.`);
+console.log(`${expectedDownloads.length - assets.length} package(s) remain unavailable until their build artifacts are present.`);
 console.log("Commit and deploy src/product-info.json to update the website download center.");
