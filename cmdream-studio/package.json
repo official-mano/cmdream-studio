@@ -1,9 +1,10 @@
 {
   "name": "cmdream-studio",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "private": true,
   "type": "module",
   "description": "Command-line art in motion.",
+  "homepage": "https://github.com/official-mano/cmdream-studio",
   "author": "CMDream Studio contributors",
   "license": "MIT",
   "main": "electron/main.cjs",

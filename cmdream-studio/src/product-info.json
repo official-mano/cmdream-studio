@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1.3.0",
+  "version": "1.3.1",
   "releaseDate": "",
   "releaseNotes": [
     "Colorful looping terminal animations and a refreshed desktop application.",
@@ -13,7 +13,7 @@
       "platform": "Windows",
       "architecture": "x64",
       "package": "Installer",
-      "fileName": "CMDream-Studio-1.3.0-Setup-x64.exe",
+      "fileName": "CMDream-Studio-1.3.1-Setup-x64.exe",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -23,7 +23,7 @@
       "platform": "Windows",
       "architecture": "x64",
       "package": "Portable app",
-      "fileName": "CMDream-Studio-1.3.0-Portable-x64.exe",
+      "fileName": "CMDream-Studio-1.3.1-Portable-x64.exe",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -33,7 +33,7 @@
       "platform": "Windows",
       "architecture": "ARM64",
       "package": "Installer",
-      "fileName": "CMDream-Studio-1.3.0-Setup-arm64.exe",
+      "fileName": "CMDream-Studio-1.3.1-Setup-arm64.exe",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -43,7 +43,7 @@
       "platform": "Windows",
       "architecture": "ARM64",
       "package": "Portable app",
-      "fileName": "CMDream-Studio-1.3.0-Portable-arm64.exe",
+      "fileName": "CMDream-Studio-1.3.1-Portable-arm64.exe",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -53,7 +53,7 @@
       "platform": "Linux",
       "architecture": "x86_64",
       "package": "AppImage",
-      "fileName": "CMDream-Studio-1.3.0-x64.AppImage",
+      "fileName": "CMDream-Studio-1.3.1-x64.AppImage",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -63,7 +63,7 @@
       "platform": "Linux",
       "architecture": "x86_64",
       "package": "Debian package",
-      "fileName": "CMDream-Studio-1.3.0-x64.deb",
+      "fileName": "CMDream-Studio-1.3.1-x64.deb",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -73,7 +73,7 @@
       "platform": "macOS",
       "architecture": "Intel",
       "package": "Disk image",
-      "fileName": "CMDream-Studio-1.3.0-x64.dmg",
+      "fileName": "CMDream-Studio-1.3.1-x64.dmg",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -83,7 +83,7 @@
       "platform": "macOS",
       "architecture": "Apple silicon",
       "package": "Disk image",
-      "fileName": "CMDream-Studio-1.3.0-arm64.dmg",
+      "fileName": "CMDream-Studio-1.3.1-arm64.dmg",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -93,7 +93,7 @@
       "platform": "macOS",
       "architecture": "Intel",
       "package": "ZIP archive",
-      "fileName": "CMDream-Studio-1.3.0-x64.zip",
+      "fileName": "CMDream-Studio-1.3.1-x64.zip",
       "url": "",
       "sizeBytes": null,
       "sha256": ""
@@ -103,7 +103,7 @@
       "platform": "macOS",
       "architecture": "Apple silicon",
       "package": "ZIP archive",
-      "fileName": "CMDream-Studio-1.3.0-arm64.zip",
+      "fileName": "CMDream-Studio-1.3.1-arm64.zip",
       "url": "",
       "sizeBytes": null,
       "sha256": ""

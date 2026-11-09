@@ -4,7 +4,7 @@ import { formatFileSize, findDownload, loadProductInfo } from "../src/releases.j
 
 test("product catalog contains versioned platform entries", () => {
   const product = loadProductInfo();
-  assert.equal(product.version, "1.3.0");
+  assert.equal(product.version, "1.3.1");
   assert.deepEqual(product.downloads.map((download) => download.id), [
     "windows-x64-installer",
     "windows-x64-portable",
@@ -17,7 +17,7 @@ test("product catalog contains versioned platform entries", () => {
     "macos-x64-zip",
     "macos-arm64-zip"
   ]);
-  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.3.0-Setup-x64.exe");
+  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.3.1-Setup-x64.exe");
   assert.equal(findDownload(product, "not-a-package"), undefined);
 });
 
@@ -30,7 +30,7 @@ test("catalog accepts the matching GitHub Release asset and rejects other or uns
 
   for (const url of [
     "http://downloads.example.com/studio.exe",
-    "https://github.com/official-mano/cmdream-studio/releases/download/v1.3.0/not-the-catalog-file.exe",
+    "https://github.com/official-mano/cmdream-studio/releases/download/v1.3.1/not-the-catalog-file.exe",
     "https://github.com/another/project/releases/download/v1.3.0/studio.exe",
     "https://user:password@downloads.example.com/studio.exe",
     "javascript:alert(1)"
