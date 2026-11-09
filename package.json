@@ -1,0 +1,69 @@
+{
+  "name": "cmdream-studio",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Command-line art in motion.",
+  "author": "CMDream Studio contributors",
+  "license": "MIT",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "node --test",
+    "preview": "vite preview --host 127.0.0.1",
+    "desktop": "npm run build && electron .",
+    "dist:windows": "npm run build && electron-builder --win nsis portable --x64 && electron-builder --win nsis portable --arm64",
+    "dist:linux": "npm run build && electron-builder --linux AppImage --x64",
+    "publish:downloads": "node scripts/publish-downloads.mjs"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1164.0",
+    "@aws-sdk/lib-storage": "^3.1164.0",
+    "@supabase/supabase-js": "^2.119.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "vite": "^6.2.3"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  },
+  "build": {
+    "appId": "studio.cmdream.app",
+    "productName": "CMDream Studio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "assets/cmdream-icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "CMDream-Studio-${version}-Setup-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "CMDream-Studio-${version}-Portable-${arch}.${ext}"
+    },
+    "linux": {
+      "icon": "assets/cmdream-icon.png",
+      "target": [
+        "AppImage"
+      ],
+      "category": "Graphics",
+      "artifactName": "CMDream-Studio-${version}-${arch}.${ext}"
+    }
+  }
+}

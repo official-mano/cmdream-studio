@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="description" content="Sign in to CMDream Studio to sync your animation scenes across devices.">
+    <title>Your account — CMDream Studio</title>
+    <link rel="icon" type="image/png" href="./assets/cmdream-icon.png">
+  </head>
+  <body class="site-page product-page">
+    <header class="site-header">
+      <a class="brand" href="./"><span class="brand-mark">C<span>M</span></span><span>CMDream<span class="brand-light"> Studio</span></span></a>
+      <nav class="site-nav" aria-label="Main navigation"><a href="./guide.html">Documentation</a><a href="./downloads.html">Download center</a></nav>
+      <a class="button button-quiet" href="./studio.html">Open studio ↗</a>
+    </header>
+    <main>
+      <section class="account-layout wrap">
+        <div class="account-intro">
+          <div class="eyebrow"><span class="status-dot"></span> YOUR CMDREAM ACCOUNT</div>
+          <h1>Your scenes,<br><span class="accent-text">wherever you create.</span></h1>
+          <p>Signing in is optional. Your local scene history and offline composer continue to work without an account. Sign in to sync scenes between your devices.</p>
+          <ul><li>Only your account can access its synced scenes.</li><li>Provider API keys are never included in scene sync.</li><li>You can sign out without deleting local scenes.</li></ul>
+        </div>
+        <div class="account-card">
+          <div class="eyebrow">EMAIL ACCOUNT</div>
+          <h2>Sign in or create an account.</h2>
+          <p id="account-notice" class="account-notice" role="status" aria-live="polite">Checking account service configuration…</p>
+          <form id="account-form">
+            <label class="field-label" for="account-email">EMAIL ADDRESS<input class="field-control" id="account-email" name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            <label class="field-label" for="account-password">PASSWORD<input class="field-control" id="account-password" name="password" type="password" autocomplete="current-password" maxlength="128" required></label>
+            <div class="account-actions"><button class="button button-primary" type="submit">Sign in</button><button class="button button-quiet" id="account-signup" type="button">Create account</button></div>
+            <button class="text-button account-reset" id="account-reset" type="button">Forgot your password?</button>
+          </form>
+          <form id="password-recovery-form" class="hidden">
+            <label class="field-label" for="recovery-password">NEW PASSWORD<input class="field-control" id="recovery-password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></label>
+            <label class="field-label" for="recovery-password-confirm">CONFIRM PASSWORD<input class="field-control" id="recovery-password-confirm" name="password-confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" required></label>
+            <button class="button button-primary account-recovery-submit" type="submit">Update password</button>
+          </form>
+          <div class="signed-in-panel hidden" id="signed-in-panel"><strong>Signed in as</strong><span id="signed-in-email"></span><a class="button button-primary" href="./studio.html">Open the studio →</a><button class="button button-quiet" id="account-signout" type="button">Sign out</button></div>
+          <p class="account-privacy">When enabled, accounts are managed by the Supabase project configured for this app. If sign-in is unavailable, account settings have not been configured. Offline scenes remain available. <a href="./guide.html#ai">Read the setup and privacy guide</a>.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer product-footer"><a class="brand" href="./"><span class="brand-mark">C<span>M</span></span><span>CMDream<span class="brand-light"> Studio</span></span></a><a href="./guide.html">Documentation</a><a href="./downloads.html">Downloads</a><span>© 2026 CMDream Studio contributors · MIT License</span></footer>
+    <script type="module" src="/src/account-page.js"></script>
+  </body>
+</html>

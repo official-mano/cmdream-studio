@@ -14,6 +14,10 @@ CMDream Studio turns animation descriptions into looping, colored terminal art. 
 
 The Render Blueprint is at the repository root. The application source and npm project are in `cmdream-studio/`. Supabase and Cloudflare R2 require owner-managed configuration. This project does not publish, deploy, or configure external services for you.
 
+## Repository and website privacy
+
+The source repository can be private while Render has permission to deploy it. A Render Static Site is still served from a public `onrender.com` address; GitHub repository privacy does not make the deployed website private. The optional account page controls scene syncing only, not access to the website. See [Render’s Static Sites documentation](https://render.com/docs/static-sites) before sharing the deployed URL.
+
 ## Run locally
 
 Install Node.js 22 or newer, then:
