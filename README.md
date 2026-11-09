@@ -76,13 +76,13 @@ The Download Center links directly to the installer files attached to the reposi
 
 To publish a new desktop version:
 
-1. Update the version in `cmdream-studio/package.json` and `cmdream-studio/src/product-info.json`, and keep them in sync. Electron Builder also requires the project homepage in `package.json`.
+1. Update the version in `cmdream-studio/package.json` and `cmdream-studio/src/product-info.json`, and keep them in sync. Electron Builder also requires the project homepage and Linux package maintainer metadata in `package.json`.
 2. Commit and push those changes to GitHub.
-3. Create and push a matching version tag. For version `1.3.1`, for example:
+3. Create and push a matching, unused version tag. For version `1.3.2`, for example:
 
    ```sh
-   git tag v1.3.1
-   git push origin v1.3.1
+   git tag v1.3.2
+   git push origin v1.3.2
    ```
 
 4. In GitHub, open the repository's **Actions** tab and wait for **Build desktop downloads** to finish. It tests and builds Windows, Linux, and macOS packages, creates a GitHub Release with the files attached, and updates the download catalog. Render then deploys the updated catalog.
@@ -111,8 +111,8 @@ The app is in the `cmdream-studio/` subfolder, so GitHub Actions is at `.github/
 Update the package version and catalog release notes, commit and push, then tag that commit:
 
 ```sh
-git tag v1.3.1
-git push origin v1.3.1
+git tag v1.3.2
+git push origin v1.3.2
 ```
 
 Pushing a `v*` tag runs the Windows, Linux, and macOS builds, creates a GitHub Release with the installer assets, and updates the website download catalog. Make sure the package version matches the tag. A tag can only be created once; use a new version if that tag already exists.
