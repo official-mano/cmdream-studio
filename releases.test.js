@@ -4,7 +4,7 @@ import { formatFileSize, findDownload, loadProductInfo } from "../src/releases.j
 
 test("product catalog contains versioned platform entries", () => {
   const product = loadProductInfo();
-  assert.equal(product.version, "1.1.0");
+  assert.equal(product.version, "1.2.0");
   assert.deepEqual(product.downloads.map((download) => download.id), [
     "windows-x64-installer",
     "windows-x64-portable",
@@ -12,7 +12,7 @@ test("product catalog contains versioned platform entries", () => {
     "windows-arm64-portable",
     "linux-x64-appimage"
   ]);
-  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.1.0-Setup-x64.exe");
+  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.2.0-Setup-x64.exe");
   assert.equal(findDownload(product, "not-a-package"), undefined);
 });
 

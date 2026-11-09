@@ -1,6 +1,7 @@
 import "./styles.css";
 import { composeOffline, validateScene } from "./scene.js";
 import { colorizeFrame, createStandaloneHtml } from "./renderer.js";
+import { canvasToPng, createExportCanvas, createScenePack, recordSceneVideo, supportedVideoType } from "./exports.js";
 import { DEFAULT_CONFIG, composeWithProvider, testProvider } from "./providers.js";
 import { createSupabaseClient, syncUserScenes, watchAuthState } from "./accounts.js";
 
@@ -14,12 +15,14 @@ const HISTORY_KEY = "cmdream-studio-scenes-v1";
 const PREFERENCES_KEY = "cmdream-studio-preferences-v1";
 const PROVIDER_NAMES = Object.keys(DEFAULT_CONFIG);
 const configs = Object.fromEntries(Object.entries(DEFAULT_CONFIG).map(([name, value]) => [name, { ...value }]));
+const cloneConfigs = (source) => Object.fromEntries(Object.entries(source).map(([name, value]) => [name, { ...value }]));
 let accountClient = null;
 let accountUserId = null;
 let syncInProgress = false;
 let syncQueued = false;
 let activeProvider = "offline";
 let draftProvider = "offline";
+let draftConfigs = null;
 let scene = null;
 let history = [];
 let activeHistoryAt = null;
@@ -28,6 +31,8 @@ let playbackSpeed = 1;
 let playhead = 0;
 let lastFrame = 0;
 let startedAt = performance.now();
+let exportPreview = null;
+let exportPack = null;
 
 function showStatus(message, kind = "info") {
   statusMessage.textContent = message;
@@ -189,6 +194,9 @@ function showScene(nextScene, addToHistory = true) {
   $("#time-label").textContent = `00:${String(Math.floor(scene.duration)).padStart(2, "0")}`;
   $("#download-json").disabled = false;
   $("#download-html").disabled = false;
+  $("#export-open").disabled = false;
+  exportPreview = null;
+  exportPack = null;
   $("#scene-code").textContent = JSON.stringify(scene, null, 2);
   if (addToHistory) {
     activeHistoryAt = Date.now();
@@ -199,8 +207,8 @@ function showScene(nextScene, addToHistory = true) {
   }
 }
 
-function exportFile(name, data, type) {
-  const url = URL.createObjectURL(new Blob([data], { type }));
+function downloadBlob(name, blob) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = name;
@@ -208,8 +216,17 @@ function exportFile(name, data, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function exportFile(name, data, type) {
+  downloadBlob(name, new Blob([data], { type }));
+}
+
 function fileSlug(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "cmdream-scene";
+}
+
+function scenePosition() {
+  if (!scene) return 0;
+  return paused ? playhead : (playhead + ((performance.now() - startedAt) / 1000) * playbackSpeed) % scene.duration;
 }
 
 function frameSize() {
@@ -250,7 +267,9 @@ function addField(container, label, key, value, options = {}) {
   input.value = value || "";
   if (options.placeholder) input.placeholder = options.placeholder;
   if (options.list) input.setAttribute("list", options.list);
-  input.addEventListener("input", () => { configs[draftProvider][key] = input.value; });
+  input.addEventListener("input", () => {
+    if (draftConfigs) draftConfigs[draftProvider][key] = input.value;
+  });
   wrapper.append(input);
   container.append(wrapper);
 }
@@ -267,7 +286,7 @@ function renderProviderFields() {
     return;
   }
   if (provider === "ollama") {
-    const config = configs.ollama;
+    const config = (draftConfigs || configs).ollama;
     addField(container, "OLLAMA ADDRESS", "endpoint", config.endpoint, { placeholder: "http://127.0.0.1:11434" });
     addField(container, "MODEL ID", "model", config.model, { placeholder: "llama3.2", list: "ollama-models" });
     const models = document.createElement("datalist");
@@ -283,7 +302,7 @@ function renderProviderFields() {
       : "Use the desktop app for local Ollama. A Render-hosted site cannot connect to Ollama running on a visitor’s PC.";
     return;
   }
-  const config = configs[provider];
+  const config = (draftConfigs || configs)[provider];
   const endpoints = {
     openai: ["API BASE URL", config.endpoint, "https://api.openai.com/v1"],
     anthropic: ["API BASE URL", config.endpoint, "https://api.anthropic.com"],
@@ -347,11 +366,24 @@ $("#prompt-form").addEventListener("submit", async (event) => {
 });
 
 $("#settings-open").addEventListener("click", () => {
+  draftConfigs = cloneConfigs(configs);
+  draftProvider = activeProvider;
   $("#provider-select").value = activeProvider;
   renderProviderFields();
   $("#connection-status").textContent = "";
+  $("#connection-status").dataset.kind = "";
+  $("#settings-account-status").textContent = accountClient
+    ? "Supabase is configured for this site. Sign in on the account page to sync scenes."
+    : "Account sync is not configured here. Local scene history and offline composition still work.";
+  $("#video-format-note").textContent = supportedVideoType().includes("mp4")
+    ? "MP4 · compatible with WhatsApp and Discord"
+    : supportedVideoType()
+      ? "WebM · upload support varies by app"
+      : "Video recording is not available in this browser";
   dialog.showModal();
 });
+$("#settings-close").addEventListener("click", () => dialog.close());
+dialog.addEventListener("close", () => { draftConfigs = null; });
 $("#provider-select").addEventListener("change", renderProviderFields);
 $("#detail-select").addEventListener("change", () => {
   if (!scene) return;
@@ -369,7 +401,7 @@ $("#test-connection").addEventListener("click", async () => {
   $("#connection-status").textContent = "Checking…";
   $("#connection-status").dataset.kind = "info";
   try {
-    const result = await testProvider(draftProvider, configs[draftProvider]);
+    const result = await testProvider(draftProvider, (draftConfigs || configs)[draftProvider]);
     $("#connection-status").textContent = result;
     $("#connection-status").dataset.kind = "success";
   } catch (error) {
@@ -380,6 +412,8 @@ $("#test-connection").addEventListener("click", async () => {
   }
 });
 $("#save-settings").addEventListener("click", () => {
+  if (!draftConfigs) return;
+  for (const provider of PROVIDER_NAMES) Object.assign(configs[provider], draftConfigs[provider]);
   activeProvider = draftProvider;
   setProviderLabel();
   const error = savePreferences();
@@ -459,6 +493,89 @@ $("#download-json").addEventListener("click", () => {
 $("#download-html").addEventListener("click", () => {
   if (scene) exportFile(`${fileSlug(scene.title)}.html`, createStandaloneHtml(scene), "text/html");
 });
+const exportDialog = $("#export-dialog");
+$("#export-open").addEventListener("click", () => {
+  if (!scene) return;
+  exportDialog.showModal();
+  void prepareExportAssets();
+});
+$("#export-close").addEventListener("click", () => exportDialog.close());
+
+async function prepareExportAssets() {
+  const status = $("#export-status");
+  const buttons = ["#share-preview", "#download-png", "#download-pack"];
+  buttons.forEach((selector) => { $(selector).disabled = true; });
+  $("#download-video").disabled = true;
+  status.textContent = "Preparing the preview and complete scene pack…";
+  const targetScene = scene;
+  const position = scenePosition();
+  const videoType = supportedVideoType();
+  $("#video-format-note").textContent = videoType.includes("mp4") ? "MP4 · compatible with WhatsApp and Discord" : videoType ? "WebM · upload support varies by app" : "Video recording is not available in this browser";
+  try {
+    exportPreview = await canvasToPng(createExportCanvas(targetScene, position));
+    exportPack = await createScenePack(targetScene, position, exportPreview);
+    if (scene !== targetScene) return;
+    buttons.forEach((selector) => { $(selector).disabled = false; });
+    $("#download-video").disabled = !videoType;
+    $("#download-json").disabled = false;
+    $("#download-html").disabled = false;
+    status.textContent = "Your preview is ready. Share opens your device’s share menu when supported; the downloads work directly.";
+  } catch (error) {
+    $("#download-json").disabled = false;
+    $("#download-html").disabled = false;
+    status.textContent = `Could not prepare the exports: ${error.message}`;
+  }
+}
+
+$("#share-preview").addEventListener("click", () => {
+  if (!scene || !exportPreview) return;
+  if (typeof File === "undefined") {
+    downloadBlob(`${fileSlug(scene.title)}-preview.png`, exportPreview);
+    $("#export-status").textContent = "Preview saved. Attach the PNG to WhatsApp, Discord, or another chat.";
+    return;
+  }
+  const file = new File([exportPreview], `${fileSlug(scene.title)}-preview.png`, { type: "image/png" });
+  let canShareFile = false;
+  try { canShareFile = Boolean(navigator.share && navigator.canShare?.({ files: [file] })); } catch {}
+  if (!canShareFile) {
+    downloadBlob(file.name, exportPreview);
+    $("#export-status").textContent = "Preview saved. Attach the PNG to WhatsApp, Discord, or another chat.";
+    return;
+  }
+  try {
+    navigator.share({ files: [file], title: scene.title, text: "Made with CMDream Studio" })
+      .then(() => { $("#export-status").textContent = "Preview shared."; })
+      .catch((error) => {
+        if (error.name !== "AbortError") $("#export-status").textContent = `Could not open the share menu: ${error.message}`;
+      });
+  } catch (error) {
+    $("#export-status").textContent = `Could not open the share menu: ${error.message}`;
+  }
+});
+
+$("#download-png").addEventListener("click", () => {
+  if (scene && exportPreview) downloadBlob(`${fileSlug(scene.title)}-preview.png`, exportPreview);
+});
+$("#download-pack").addEventListener("click", () => {
+  if (scene && exportPack) downloadBlob(`${fileSlug(scene.title)}-scene-pack.zip`, exportPack);
+});
+$("#download-video").addEventListener("click", async (event) => {
+  if (!scene) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  $("#export-status").textContent = "Recording the loop…";
+  try {
+    const result = await recordSceneVideo(scene, (progress) => {
+      $("#export-status").textContent = `Recording the loop… ${Math.round(progress * 100)}%`;
+    });
+    downloadBlob(`${fileSlug(scene.title)}.${result.extension}`, result.blob);
+    $("#export-status").textContent = `Video saved as ${result.extension.toUpperCase()}. Attach it to a chat or open it in a video editor.`;
+  } catch (error) {
+    $("#export-status").textContent = `Could not record the loop: ${error.message}`;
+  } finally {
+    button.disabled = !supportedVideoType();
+  }
+});
 $("#copy-json").addEventListener("click", async () => {
   if (!scene) return;
   try {
@@ -481,6 +598,9 @@ $("#new-scene").addEventListener("click", () => {
   $("#scene-description").textContent = "Waiting for your first scene.";
   $("#download-json").disabled = true;
   $("#download-html").disabled = true;
+  $("#export-open").disabled = true;
+  exportPreview = null;
+  exportPack = null;
   $("#play-toggle").disabled = true;
   $("#restart").disabled = true;
   $("#seek").disabled = true;
@@ -493,7 +613,15 @@ try {
   accountClient = createSupabaseClient();
   watchAuthState(accountClient, (session, error) => {
     const accountLink = $("#account-link");
+    if (!accountClient) {
+      accountLink.textContent = "Sync setup";
+      accountLink.title = "Account sync is not configured on this site. Local scene history still works.";
+      $("#sync-status").textContent = "Local scene history is on. Account sync needs Supabase setup.";
+      return;
+    }
     if (error) {
+      accountLink.textContent = "Account";
+      accountLink.title = "The account service could not be reached. Local scenes remain available.";
       $("#sync-status").textContent = "Could not check your account. Local scenes remain available.";
       showStatus(`Account session check failed: ${error.message}`, "error");
       return;
@@ -510,7 +638,9 @@ try {
     if (nextUserId) void syncAccountHistory();
   });
 } catch (error) {
-  $("#sync-status").textContent = "Account settings need to be configured. Local scenes remain available.";
+  $("#account-link").textContent = "Sync setup";
+  $("#account-link").title = "Account sync setup needs attention. Local scene history still works.";
+  $("#sync-status").textContent = "Local scene history is on. Account sync setup needs attention.";
   showStatus(`Account setup is incomplete: ${error.message}`, "error");
 }
 

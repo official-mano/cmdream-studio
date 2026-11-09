@@ -597,12 +597,17 @@ function createSceneRenderer() {
   };
 }
 
-export function createFrameRenderer() {
-  const draw = createSceneRenderer();
+const renderSceneCells = createSceneRenderer();
+
+export function renderCells(scene, seconds, width = 100, height = 32) {
+  return renderSceneCells(scene, seconds, width, height);
+}
+
+export function createFrameRenderer(draw = renderSceneCells) {
   return (scene, seconds, width = 100, height = 32) => draw(scene, seconds, width, height).map((row) => row.map((cell) => cell.glyph).join("").replace(/\s+$/, "")).join("\n");
 }
 
-export function createFrameColorizer(draw = createSceneRenderer()) {
+export function createFrameColorizer(draw = renderSceneCells) {
   const escapeHtml = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return (scene, _frame, seconds, width = 100, height = 32) => {
     const rows = draw(scene, seconds, width, height, true);

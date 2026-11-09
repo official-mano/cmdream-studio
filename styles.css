@@ -47,8 +47,8 @@ button { color: inherit; }
 .text-link:hover { color: var(--accent); }
 .text-link-light { color: #cecece; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font: 600 15px var(--display); letter-spacing: -.04em; white-space: nowrap; }
-.brand-mark { width: 26px; height: 26px; display: inline-grid; place-items: center; border: 1px solid #6e6e6e; border-radius: 5px; font: 500 10px var(--mono); color: var(--accent); letter-spacing: -.1em; }
-.brand-mark span { color: #a3a3a3; }
+.brand-mark { width: 30px; height: 30px; display: inline-block; flex: none; border: 0; border-radius: 0; background: url("../assets/cmdream-icon.svg") center / contain no-repeat; }
+.brand-mark span { display: none; }
 .brand-light { color: #9c9c9c; font-weight: 400; }
 
 /* Public studio site */
@@ -395,4 +395,33 @@ button { color: inherit; }
   .site-nav a { font-size: 10px; }
   .site-header .header-secondary { display: none; }
   .site-header > .button { min-height: 34px; padding-inline: 9px; font-size: 10px; }
+}
+
+.settings-cost-note { margin: 11px 0 0; color: #a2a2a2; font-size: 10px; line-height: 1.65; }
+.studio-header-actions #account-link { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-account { margin-top: 18px; padding: 14px; border: 1px solid #343434; background: #0b0b0b; }
+.settings-account p { margin: 7px 0 9px; color: #a6a6a6; font-size: 10px; line-height: 1.65; }
+.settings-account > a { color: #e6e6e6; font: 10px var(--mono); text-decoration: underline; text-underline-offset: 3px; }
+.export-open { min-height: 34px; padding-inline: 12px; font-size: 10px; white-space: nowrap; }
+.export-dialog { width: min(720px,calc(100% - 28px)); max-height: min(90vh,850px); padding: 0; overflow: auto; border: 1px solid #424242; border-radius: 4px; background: #101010; color: var(--ink); box-shadow: 0 25px 90px #000000bb; }
+.export-dialog::backdrop { background: #050505d9; backdrop-filter: blur(4px); }
+.export-shell { padding: clamp(18px,4vw,30px); }
+.export-shell .settings-heading h2 { max-width: 520px; font-size: clamp(21px,4vw,28px); }
+.export-intro { max-width: 580px; margin: 14px 0 20px; color: #aaaaaa; font-size: 11px; line-height: 1.7; }
+.export-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+.export-action { min-width: 0; min-height: 84px; display: grid; align-content: center; gap: 7px; padding: 14px; border: 1px solid #363636; border-radius: 3px; background: #141414; color: #ededed; text-align: left; cursor: pointer; transition: background .18s ease,border-color .18s ease,transform .18s ease; }
+.export-action:hover:not(:disabled) { border-color: #8a8a8a; background: #1b1b1b; transform: translateY(-1px); }
+.export-action strong { font: 500 12px var(--display); }
+.export-action span { color: #a4a4a4; font-size: 10px; line-height: 1.5; }
+.export-action-primary { border-color: #737373; background: #1b1b1b; }
+.export-action:disabled { opacity: .5; cursor: wait; }
+.export-status { min-height: 17px; margin: 14px 1px 0; color: #bdbdbd; font-size: 10px; line-height: 1.6; }
+.export-status:empty { min-height: 0; margin-top: 0; }
+.export-action:focus-visible, .icon-button:focus-visible, .tool-button:focus-visible, .text-button:focus-visible, .field-control:focus-visible { outline: 2px solid #eeeeee; outline-offset: 3px; }
+
+@media (max-width: 560px) {
+  .export-grid { grid-template-columns: 1fr; }
+  .export-action { min-height: 70px; }
+  .export-open { padding-inline: 9px; }
+  .studio-header-actions #account-link { max-width: 96px; }
 }

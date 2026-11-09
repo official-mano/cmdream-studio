@@ -31,7 +31,7 @@ function updateSession(nextSession) {
 try {
   client = createSupabaseClient();
   if (!client) {
-    showNotice("Account service is not configured for this app. Offline scenes still work; sign-in and sync need the account service enabled.", "error");
+    showNotice("Account sync is not enabled on this site. Your scenes still save on this device; the site owner must configure Supabase to turn on sign-in.");
     form.querySelectorAll("input,button").forEach((element) => { element.disabled = true; });
   } else {
     watchAuthState(client, (nextSession, error, event) => {
