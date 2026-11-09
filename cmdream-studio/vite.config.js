@@ -21,7 +21,7 @@ export default defineConfig({
         studio: "studio.html",
         downloads: "downloads.html",
         guide: "guide.html",
-        account: "account.html"
+        about: "about.html"
       }
     }
   }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createCatalogDownloads } from "../scripts/download-manifest.js";
+import { createCatalogDownloads } from "./download-manifest.js";
 
 const expectedDownloads = [
   { id: "windows-x64-installer", fileName: "CMDream-Studio-1.1.0-Setup-x64.exe" },

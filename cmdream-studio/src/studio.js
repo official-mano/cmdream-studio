@@ -2,7 +2,6 @@ import "./styles.css";
 import { composeOffline, validateScene } from "./scene.js";
 import { colorizeFrame, createStandaloneHtml } from "./renderer.js";
 import { DEFAULT_CONFIG, composeWithProvider, testProvider } from "./providers.js";
-import { createSupabaseClient, syncUserScenes, watchAuthState } from "./accounts.js";
 
 const $ = (selector) => document.querySelector(selector);
 const promptInput = $("#prompt");
@@ -14,10 +13,6 @@ const HISTORY_KEY = "cmdream-studio-scenes-v1";
 const PREFERENCES_KEY = "cmdream-studio-preferences-v1";
 const PROVIDER_NAMES = Object.keys(DEFAULT_CONFIG);
 const configs = Object.fromEntries(Object.entries(DEFAULT_CONFIG).map(([name, value]) => [name, { ...value }]));
-let accountClient = null;
-let accountUserId = null;
-let syncInProgress = false;
-let syncQueued = false;
 let activeProvider = "offline";
 let draftProvider = "offline";
 let scene = null;
@@ -90,39 +85,6 @@ function saveHistory() {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 100)));
   } catch (error) {
     showStatus(`This browser could not save scene history: ${error.message}`, "error");
-  }
-  if (accountUserId) void syncAccountHistory();
-}
-
-async function syncAccountHistory() {
-  if (!accountClient || !accountUserId) return;
-  if (syncInProgress) {
-    syncQueued = true;
-    return;
-  }
-  syncInProgress = true;
-  const userId = accountUserId;
-  try {
-    do {
-      syncQueued = false;
-      const mergedScenes = await syncUserScenes(accountClient, userId, history);
-      if (accountUserId !== userId) return;
-      history = mergedScenes;
-      try {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-      } catch (error) {
-        showStatus(`Scenes synced, but this device could not save a local copy: ${error.message}`, "error");
-      }
-      drawHistory();
-      $("#sync-status").textContent = `Synced ${history.length} scene${history.length === 1 ? "" : "s"} to your account.`;
-      showStatus("Your scenes are synced to your CMDream account.", "success");
-    } while (syncQueued && accountUserId === userId);
-  } catch (error) {
-    $("#sync-status").textContent = "Scene sync failed. Your local scenes are unchanged.";
-    showStatus(`Scene sync failed: ${error.message}`, "error");
-  } finally {
-    syncInProgress = false;
-    if (syncQueued && accountUserId && accountUserId !== userId) void syncAccountHistory();
   }
 }
 
@@ -488,31 +450,6 @@ $("#new-scene").addEventListener("click", () => {
   $("#scene-code").textContent = "Generate a scene to inspect its safe, constrained plan.";
   drawHistory();
 });
-
-try {
-  accountClient = createSupabaseClient();
-  watchAuthState(accountClient, (session, error) => {
-    const accountLink = $("#account-link");
-    if (error) {
-      $("#sync-status").textContent = "Could not check your account. Local scenes remain available.";
-      showStatus(`Account session check failed: ${error.message}`, "error");
-      return;
-    }
-    const nextUserId = session?.user?.id || null;
-    accountUserId = nextUserId;
-    accountLink.textContent = session?.user?.email || "Account";
-    accountLink.title = session
-      ? "Signed in. Your scenes sync to this account."
-      : "Sign in optionally to sync scenes between devices.";
-    $("#sync-status").textContent = nextUserId
-      ? "Syncing scenes to your account…"
-      : "Scenes save on this device. Sign in to turn on sync.";
-    if (nextUserId) void syncAccountHistory();
-  });
-} catch (error) {
-  $("#sync-status").textContent = "Account settings need to be configured. Local scenes remain available.";
-  showStatus(`Account setup is incomplete: ${error.message}`, "error");
-}
 
 loadPreferences();
 sceneItems();

@@ -4,7 +4,7 @@
 
 CMDream Studio turns a plain-language animation idea into a small, validated JSON scene plan, then draws every frame with a fixed ASCII renderer. The model never returns executable code, and model output is never evaluated or executed.
 
-The repository contains a public-facing website, animation workspace (`studio.html`), download center (`downloads.html`), user guide (`guide.html`), and account page, plus an Electron desktop app. The website is static; the download center reads the bundled `src/product-info.json` catalog and links directly to the configured public file host. It does not call GitHub for product or release data. The desktop app adds a tightly scoped local Ollama bridge.
+The repository contains a public-facing website, project overview (`about.html`), animation workspace (`studio.html`), download center (`downloads.html`), user guide (`guide.html`), and an Electron desktop app. The website is static; the download center reads the bundled `src/product-info.json` catalog and links directly to the configured public file host. It does not call GitHub for product or release data. The desktop app adds a tightly scoped local Ollama bridge.
 
 ## What it does
 
@@ -16,7 +16,7 @@ The repository contains a public-facing website, animation workspace (`studio.ht
 - Use a local Ollama model from the desktop app.
 - Optionally connect OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, or an OpenAI-compatible provider.
 - Preview, pause, restart, seek, change playback speed, revisit recent scenes, and export scene JSON or standalone HTML.
-- Use the Windows/macOS/Linux desktop app's native menus to move between the workspace, account, downloads, and documentation.
+- Use the Windows/macOS/Linux desktop app's native menus to move between the home page, workspace, About, downloads, and documentation.
 - Inspect the validated scene plan before exporting it.
 - Explore six live, max-detail renderer examples on the homepage; their grids adapt to the available card size and respect reduced-motion preferences.
 
@@ -66,18 +66,6 @@ Select a provider in **Settings**, enter its model ID / deployment and endpoint 
 
 Do not use a shared/public computer for a cloud key. Remove/revoke any key you no longer want to use.
 
-## Accounts and optional scene sync
-
-Accounts are optional. Without Supabase configuration, the offline composer, local history, and desktop app continue to work; account sign-in is unavailable.
-
-1. Create a Supabase project and run `supabase/migrations/20261108190000_user_scenes.sql` in its SQL editor.
-2. In Supabase Auth, set the site URL to your actual hosted site and add that origin plus `/account.html` to the allowed redirect URLs. Set up email confirmation and a working SMTP provider before enabling public sign-up. Review Supabase's authentication rate limits before opening sign-up publicly.
-3. Configure the site's build environment with `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (the Supabase publishable/anon key only), and `VITE_PUBLIC_SITE_URL`. Never use the service-role key in the site or desktop app. For local development, copy `.env.example` to `.env.local` and fill in the same values.
-
-The Supabase database uses row-level security so authenticated users can access only their own scene rows. The app syncs at most 100 scenes. Passwords and auth tokens are handled by Supabase; synced scene prompts and scene JSON are stored there, but provider API keys are never included. If an account service is not configured for the web and desktop builds, sign-in/sign-up is unavailable; this does not disable offline use.
-
-For desktop builds produced by GitHub Actions, add the same three **public configuration values** under repository **Settings → Secrets and variables → Actions → Variables** with the exact names above. These values are compiled into the app; do not put a Supabase service-role/secret key in any variable or secret.
-
 ## Publish desktop downloads to Cloudflare R2
 
 The website's version, notes, file names, sizes, checksums, and URLs come from `src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
@@ -93,8 +81,7 @@ The uploader publishes every expected package it finds and skips missing builds,
 ## Deploy the website on Render
 
 1. Keep the repository-root `.github/workflows/`, `render.yaml`, and `cmdream-studio/` layout. In Render, choose **New → Blueprint** and connect the repository, or create a Static Site manually with root directory `cmdream-studio`, build command `npm ci --include=dev && npm run build`, and publish directory `dist`.
-2. Configure the Supabase build environment variables above if you want sign-in enabled. The site can also build without them; account sync will remain unavailable.
-3. Render assigns and displays the site's public URL in its dashboard, typically an `onrender.com` hostname. The exact hostname depends on availability; use the actual value shown in Render for `VITE_PUBLIC_SITE_URL` and Supabase redirect configuration. Redeploy after changing build-time variables.
+2. Render assigns and displays the site's public URL in its dashboard, typically an `onrender.com` hostname. The exact hostname depends on availability; use the actual value shown in Render if configuring a custom domain or provider allowlist.
 4. To use a custom domain you control, open the static site's **Settings → Custom Domains**, add the hostname, and follow the DNS and TLS instructions Render provides.
 
 Render hosts the public site, not an Ollama server. A Render-hosted site cannot connect to Ollama running on a visitor's computer. Ollama support is desktop-only.
@@ -149,6 +136,7 @@ repository-root/
     ├── src/                    # Fixed renderer, scene contract, provider adapters, UI
     ├── tests/
     ├── index.html              # Public-facing landing page
+    ├── about.html              # Product overview
     ├── studio.html             # Animation workspace
     ├── downloads.html          # Product catalog and direct file-host links
     ├── guide.html              # User documentation and project status

@@ -19,9 +19,9 @@ function installApplicationMenu() {
         { label: "Home", click: () => openPage("index.html") },
         { label: "Animation workspace", click: () => openPage("studio.html") },
         { type: "separator" },
-        { label: "Account and scene sync", click: () => openPage("account.html") },
-        { label: "Downloads", click: () => openPage("downloads.html") },
+        { label: "About CMDream Studio", click: () => openPage("about.html") },
         { label: "Documentation", click: () => openPage("guide.html") },
+        { label: "Downloads", click: () => openPage("downloads.html") },
         { type: "separator" },
         process.platform === "darwin" ? { role: "close" } : { role: "quit" }
       ]

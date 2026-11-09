@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { composeOffline, DETAIL_EXAMPLES, parseSceneResponse, validateScene } from "../src/scene.js";
-import { createFrameRenderer, colorizeFrame, createStandaloneHtml } from "../src/renderer.js";
+import { composeOffline, DETAIL_EXAMPLES, parseSceneResponse, validateScene } from "./scene.js";
+import { createFrameRenderer, colorizeFrame, createStandaloneHtml } from "./renderer.js";
 
 test("offline composer recognizes multiple subjects and returns a version 2 loop", () => {
   const scene = composeOffline("A rose opening while stars twinkle above the waves");

@@ -1,13 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <defs>
-    <radialGradient id="screen" cx="50%" cy="35%" r="75%">
-      <stop offset="0" stop-color="#17271d"/>
-      <stop offset="1" stop-color="#0a100d"/>
-    </radialGradient>
-  </defs>
-  <rect x="10" y="10" width="236" height="236" rx="42" fill="url(#screen)" stroke="#385943" stroke-width="4"/>
-  <path d="M75 82 125 128 75 174" fill="none" stroke="#b7f4c8" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
-  <path d="M143 175h43" fill="none" stroke="#82d996" stroke-linecap="round" stroke-width="17"/>
-  <circle cx="185" cy="69" r="5" fill="#8fe6a8"/>
-  <circle cx="201" cy="69" r="3" fill="#547d5d"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">CMDream Studio</title>
+  <rect width="64" height="64" rx="14" fill="#050505"/>
+  <path d="M7 22h12l8 7 5 5 5-5 8-7h12M7 42h12l8-7 5-5 5 5 8 7h12" fill="none" stroke="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" stroke-dasharray="1 2.2"/>
+  <path d="M8 22h9m30 0h9M8 42h9m30 0h9" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3"/>
+  <path d="m32 25 1.8 5.2L39 32l-5.2 1.8L32 39l-1.8-5.2L25 32l5.2-1.8z" fill="#fff"/>
+  <circle cx="32" cy="32" r="1.2" fill="#050505"/>
 </svg>

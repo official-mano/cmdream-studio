@@ -5,7 +5,7 @@
   "releaseNotes": [
     "Black-and-silver studio redesign and refreshed monochrome app icon.",
     "Chat exports: PNG preview, loop video, or complete scene pack with JSON, text, and standalone HTML.",
-    "Clearer account sync status and provider settings that discard unsaved edits."
+    "Local scene history and provider settings that discard unsaved edits."
   ],
   "downloads": [
     {

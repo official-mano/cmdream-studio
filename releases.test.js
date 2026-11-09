@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatFileSize, findDownload, loadProductInfo } from "../src/releases.js";
+import { formatFileSize, findDownload, loadProductInfo } from "./releases.js";
 
 test("product catalog contains versioned platform entries", () => {
   const product = loadProductInfo();
@@ -24,7 +24,7 @@ test("catalog accepts a configured HTTPS storage URL and rejects GitHub or unsaf
 
   for (const url of [
     "http://downloads.example.com/studio.exe",
-    "https://github.com/official-mano/cmdream-studio/releases/download/v1.1.0/studio.exe",
+    "https://github.com/official-mano/cmdream-studio/releases/download/v1.2.0/studio.exe",
     "https://user:password@downloads.example.com/studio.exe",
     "javascript:alert(1)"
   ]) {
