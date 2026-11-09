@@ -70,16 +70,26 @@ Select a provider in **Settings**, enter its model ID / deployment and endpoint 
 
 Do not use a shared/public computer for a cloud key. Remove/revoke any key you no longer want to use.
 
-## Publish desktop downloads to Cloudflare R2
+## Download and publish desktop releases
 
-The website's version, notes, file names, sizes, checksums, and URLs come from `cmdream-studio/src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
+The Download Center links directly to the installer files attached to the repository's [GitHub Releases](https://github.com/official-mano/cmdream-studio/releases). No separate storage bucket, provider account, API token, or website upload is needed. The site reads its bundled catalog; it does not call GitHub for product or release information.
 
-1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads.
-2. In GitHub, open the repository **Settings → Secrets and variables → Actions**. Add repository secrets named `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`. Add `R2_PUBLIC_BASE_URL` under **Variables** with the HTTPS public domain for the bucket. Use a bucket-scoped token with object read/write permission; never commit or share its credentials.
-3. Keep `cmdream-studio/package.json` and `cmdream-studio/src/product-info.json` aligned. Push a matching version tag (for example `v1.3.0`). The workflow builds the installers, uploads them to R2, computes checksums, updates the public catalog, and pushes that catalog change so Render can redeploy.
-4. If you prefer to publish from your own computer, download the `windows-downloads`, `linux-downloads`, and `macos-downloads` workflow artifacts into `cmdream-studio/release/`, set the same R2 values as local environment variables, then run `npm run publish:downloads` from the `cmdream-studio/` directory. This command uploads any artifacts it finds and records unavailable builds without creating broken links.
+To publish a new desktop version:
 
-The workflow refuses to publish if any expected platform package is missing. GitHub Actions only builds and uploads the release files to your configured R2 host; the website itself reads its bundled catalog and downloads directly from that host. Publishing requires these R2 settings—without them the website keeps the download buttons disabled rather than linking to files that do not exist.
+1. Update the version in `cmdream-studio/package.json` and the release notes in `cmdream-studio/src/product-info.json`. Keep the version numbers in sync.
+2. Commit and push those changes to GitHub.
+3. Create and push a matching version tag. For version `1.3.0`, for example:
+
+   ```sh
+   git tag v1.3.0
+   git push origin v1.3.0
+   ```
+
+4. In GitHub, open the repository's **Actions** tab and wait for **Build desktop downloads** to finish. It tests and builds Windows, Linux, and macOS packages, creates a GitHub Release with the files attached, and updates the download catalog. Render then deploys the updated catalog.
+
+To download manually, visit the [GitHub Releases page](https://github.com/official-mano/cmdream-studio/releases), select a version, and choose the file for your operating system and processor. The Download Center provides direct links after the workflow completes. If downloads are unavailable, check the Actions run and the release assets for that version.
+
+Release publishing uses the repository's standard GitHub Actions token and needs no additional secrets. The workflow refuses to create a release if any expected package is missing.
 
 ## Deploy the website on Render
 
@@ -105,7 +115,7 @@ git tag v1.3.0
 git push origin v1.3.0
 ```
 
-Pushing a `v*` tag runs the Windows, Linux, and macOS builds and uploads workflow artifacts for the repository. It does not create GitHub Releases and is not the public download host. Run the R2 publishing steps above to make website downloads available.
+Pushing a `v*` tag runs the Windows, Linux, and macOS builds, creates a GitHub Release with the installer assets, and updates the website download catalog. Make sure the package version matches the tag. A tag can only be created once; use a new version if that tag already exists.
 
 The Windows and macOS builds are not code-signed. Windows may show a SmartScreen warning, and macOS may block the first launch, until you sign builds with certificates you control. The Windows installer creates shortcuts and an uninstaller; removing the app leaves its local scene history in the user profile.
 

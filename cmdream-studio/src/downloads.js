@@ -31,7 +31,7 @@ try {
     const download = findDownload(productInfo, card.dataset.asset);
     const link = card.querySelector("[data-download]");
     if (!download || !download.url) {
-      disableDownload(link, download ? "This build has not been published yet." : "This package is not in the current product catalog.");
+      disableDownload(link, download ? "This build is not available until its GitHub Release is published." : "This package is not in the current product catalog.");
       return;
     }
     availableDownloads += 1;
@@ -42,8 +42,8 @@ try {
       `${download.fileName} · ${formatFileSize(download.sizeBytes)}${download.sha256 ? ` · SHA-256 ${download.sha256}` : ""}`;
   });
   status.textContent = availableDownloads
-    ? `${availableDownloads} download${availableDownloads === 1 ? "" : "s"} available. Links open CMDream Studio’s configured file host.`
-    : "Downloads are not available yet. The release files must be uploaded to CMDream Studio’s file host before these buttons can work.";
+    ? `${availableDownloads} download${availableDownloads === 1 ? "" : "s"} available from GitHub Releases.`
+    : "Downloads are not available yet. They will appear here after the desktop builds are published to GitHub Releases.";
 } catch (error) {
   version.textContent = "Product information unavailable";
   date.textContent = "";

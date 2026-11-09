@@ -21,15 +21,17 @@ test("product catalog contains versioned platform entries", () => {
   assert.equal(findDownload(product, "not-a-package"), undefined);
 });
 
-test("catalog accepts a configured HTTPS storage URL and rejects GitHub or unsafe URLs", () => {
+test("catalog accepts the matching GitHub Release asset and rejects other or unsafe URLs", () => {
   const product = loadProductInfo();
   const download = product.downloads[0];
-  const configured = { ...product, downloads: [{ ...download, url: "https://downloads.example.com/studio.exe" }] };
-  assert.equal(loadProductInfo(configured).downloads[0].url, "https://downloads.example.com/studio.exe");
+  const releaseUrl = `https://github.com/official-mano/cmdream-studio/releases/download/v${product.version}/${download.fileName}`;
+  const configured = { ...product, downloads: [{ ...download, url: releaseUrl }] };
+  assert.equal(loadProductInfo(configured).downloads[0].url, releaseUrl);
 
   for (const url of [
     "http://downloads.example.com/studio.exe",
-    "https://github.com/official-mano/cmdream-studio/releases/download/v1.3.0/studio.exe",
+    "https://github.com/official-mano/cmdream-studio/releases/download/v1.3.0/not-the-catalog-file.exe",
+    "https://github.com/another/project/releases/download/v1.3.0/studio.exe",
     "https://user:password@downloads.example.com/studio.exe",
     "javascript:alert(1)"
   ]) {

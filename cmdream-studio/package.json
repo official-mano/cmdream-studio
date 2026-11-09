@@ -16,11 +16,9 @@
     "dist:windows": "npm run build && electron-builder --win nsis portable --x64 && electron-builder --win nsis portable --arm64",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb --x64",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 && electron-builder --mac dmg zip --arm64",
-    "publish:downloads": "node scripts/publish-downloads.mjs"
+    "update:release-catalog": "node scripts/update-release-catalog.mjs"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1164.0",
-    "@aws-sdk/lib-storage": "^3.1164.0",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0",
     "vite": "^6.2.3"

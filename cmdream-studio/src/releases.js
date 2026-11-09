@@ -16,7 +16,7 @@ export function loadProductInfo(data = catalog) {
       typeof item.architecture === "string" && item.architecture.length > 0 &&
       typeof item.package === "string" && item.package.length > 0 &&
       typeof item.fileName === "string" && item.fileName.length > 0 &&
-      (item.url === "" || isSafeDownloadUrl(item.url)) &&
+      (item.url === "" || isSafeDownloadUrl(item.url, data.version, item.fileName)) &&
       (item.sizeBytes === null || (Number.isSafeInteger(item.sizeBytes) && item.sizeBytes >= 0)) &&
       (typeof item.sha256 === "string" && (item.sha256 === "" || /^[a-f\d]{64}$/i.test(item.sha256)))
     );
@@ -26,14 +26,16 @@ export function loadProductInfo(data = catalog) {
   return data;
 }
 
-function isSafeDownloadUrl(value) {
+function isSafeDownloadUrl(value, version, fileName) {
   try {
     const url = new URL(value);
     return url.protocol === "https:" &&
       url.username === "" &&
       url.password === "" &&
-      url.hostname !== "github.com" &&
-      !url.hostname.endsWith(".github.com");
+      url.hostname === "github.com" &&
+      url.pathname === `/official-mano/cmdream-studio/releases/download/v${version}/${encodeURIComponent(fileName)}` &&
+      url.search === "" &&
+      url.hash === "";
   } catch {
     return false;
   }
