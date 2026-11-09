@@ -17,7 +17,12 @@ const expectedDownloads = [
   { id: "windows-x64-portable", fileName: `CMDream-Studio-${version}-Portable-x64.exe`, platform: "Windows", architecture: "x64", package: "Portable app" },
   { id: "windows-arm64-installer", fileName: `CMDream-Studio-${version}-Setup-arm64.exe`, platform: "Windows", architecture: "ARM64", package: "Installer" },
   { id: "windows-arm64-portable", fileName: `CMDream-Studio-${version}-Portable-arm64.exe`, platform: "Windows", architecture: "ARM64", package: "Portable app" },
-  { id: "linux-x64-appimage", fileName: `CMDream-Studio-${version}-x64.AppImage`, platform: "Linux", architecture: "x86_64", package: "AppImage" }
+  { id: "linux-x64-appimage", fileName: `CMDream-Studio-${version}-x64.AppImage`, platform: "Linux", architecture: "x86_64", package: "AppImage" },
+  { id: "linux-x64-deb", fileName: `CMDream-Studio-${version}-x64.deb`, platform: "Linux", architecture: "x86_64", package: "Debian package" },
+  { id: "macos-x64-dmg", fileName: `CMDream-Studio-${version}-x64.dmg`, platform: "macOS", architecture: "Intel", package: "Disk image" },
+  { id: "macos-arm64-dmg", fileName: `CMDream-Studio-${version}-arm64.dmg`, platform: "macOS", architecture: "Apple silicon", package: "Disk image" },
+  { id: "macos-x64-zip", fileName: `CMDream-Studio-${version}-x64.zip`, platform: "macOS", architecture: "Intel", package: "ZIP archive" },
+  { id: "macos-arm64-zip", fileName: `CMDream-Studio-${version}-arm64.zip`, platform: "macOS", architecture: "Apple silicon", package: "ZIP archive" }
 ];
 
 function requiredEnvironment(name) {
@@ -77,6 +82,11 @@ for (const item of expectedDownloads) {
 }
 if (!assets.length) {
   throw new Error(`No release files were found in ${releaseDirectory}. Build at least one Windows or Linux package before publishing.`);
+}
+if (process.env.REQUIRE_ALL_DOWNLOADS === "1" && assets.length !== expectedDownloads.length) {
+  const uploaded = new Set(assets.map((asset) => asset.fileName));
+  const missing = expectedDownloads.filter((asset) => !uploaded.has(asset.fileName)).map((asset) => asset.fileName);
+  throw new Error(`Refusing to publish an incomplete release. Missing build artifacts: ${missing.join(", ")}`);
 }
 
 const client = new S3Client({

@@ -4,15 +4,20 @@ import { formatFileSize, findDownload, loadProductInfo } from "../src/releases.j
 
 test("product catalog contains versioned platform entries", () => {
   const product = loadProductInfo();
-  assert.equal(product.version, "1.1.0");
+  assert.equal(product.version, "1.3.0");
   assert.deepEqual(product.downloads.map((download) => download.id), [
     "windows-x64-installer",
     "windows-x64-portable",
     "windows-arm64-installer",
     "windows-arm64-portable",
-    "linux-x64-appimage"
+    "linux-x64-appimage",
+    "linux-x64-deb",
+    "macos-x64-dmg",
+    "macos-arm64-dmg",
+    "macos-x64-zip",
+    "macos-arm64-zip"
   ]);
-  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.1.0-Setup-x64.exe");
+  assert.equal(findDownload(product, "windows-x64-installer").fileName, "CMDream-Studio-1.3.0-Setup-x64.exe");
   assert.equal(findDownload(product, "not-a-package"), undefined);
 });
 
@@ -24,7 +29,7 @@ test("catalog accepts a configured HTTPS storage URL and rejects GitHub or unsaf
 
   for (const url of [
     "http://downloads.example.com/studio.exe",
-    "https://github.com/official-mano/cmdream-studio/releases/download/v1.1.0/studio.exe",
+    "https://github.com/official-mano/cmdream-studio/releases/download/v1.3.0/studio.exe",
     "https://user:password@downloads.example.com/studio.exe",
     "javascript:alert(1)"
   ]) {

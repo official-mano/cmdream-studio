@@ -1,8 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">CMDream Studio</title>
+  <defs>
+    <linearGradient id="motion" x1="7" y1="22" x2="57" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#57e6ff"/>
+      <stop offset=".52" stop-color="#9d8bff"/>
+      <stop offset="1" stop-color="#ff70b8"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="25" y1="25" x2="39" y2="39" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff28a"/>
+      <stop offset="1" stop-color="#ff9d67"/>
+    </linearGradient>
+  </defs>
   <rect width="64" height="64" rx="14" fill="#050505"/>
-  <path d="M7 22h12l8 7 5 5 5-5 8-7h12M7 42h12l8-7 5-5 5 5 8 7h12" fill="none" stroke="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" stroke-dasharray="1 2.2"/>
-  <path d="M8 22h9m30 0h9M8 42h9m30 0h9" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3"/>
-  <path d="m32 25 1.8 5.2L39 32l-5.2 1.8L32 39l-1.8-5.2L25 32l5.2-1.8z" fill="#fff"/>
+  <path d="M7 22h12l8 7 5 5 5-5 8-7h12M7 42h12l8-7 5-5 5 5 8 7h12" fill="none" stroke="url(#motion)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" stroke-dasharray="1 2.2"/>
+  <path d="M8 22h9m30 0h9M8 42h9m30 0h9" fill="none" stroke="#57e6ff" stroke-linecap="round" stroke-width="3"/>
+  <path d="m32 25 1.8 5.2L39 32l-5.2 1.8L32 39l-1.8-5.2L25 32l5.2-1.8z" fill="url(#spark)"/>
   <circle cx="32" cy="32" r="1.2" fill="#050505"/>
 </svg>

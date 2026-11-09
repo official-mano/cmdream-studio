@@ -317,7 +317,7 @@ button { color: inherit; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
-body.site-page, body.studio-page { filter: grayscale(1); background-color: #050505; }
+body.site-page, body.studio-page { background-color: #050505; }
 .site-page { background-image: radial-gradient(ellipse at 74% 9%, #171717 0, transparent 35%); }
 .studio-page { background-image: radial-gradient(ellipse at 62% -12%, #181818, transparent 38%); }
 .site-page .accent-text { color: #f2f2f2; }
@@ -400,7 +400,6 @@ body.site-page, body.studio-page { filter: grayscale(1); background-color: #0505
 .guide-hero .hero-actions { margin-top: 22px; }
 .site-footer { border-color: #292929; }
 .site-footer a:hover { color: #fff; }
-.studio-page { filter: grayscale(1); }
 .studio-header { background: #0a0a0a; }
 .workspace { background: transparent; }
 @media (max-width: 720px) {

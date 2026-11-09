@@ -26,6 +26,7 @@ The repository contains a public-facing website, project overview (`about.html`)
 Install Node.js 22 or newer, then use the lockfile for a reproducible setup:
 
 ```sh
+cd cmdream-studio
 npm ci
 npm run dev
 ```
@@ -35,12 +36,14 @@ Open the local address printed by Vite. The landing page is `/`; the workspace i
 Run the desktop app during development:
 
 ```sh
+cd cmdream-studio
 npm run desktop
 ```
 
 Run the tests and production website build:
 
 ```sh
+cd cmdream-studio
 npm test
 npm run build
 ```
@@ -69,21 +72,20 @@ Do not use a shared/public computer for a cloud key. Remove/revoke any key you n
 
 ## Publish desktop downloads to Cloudflare R2
 
-The website's version, notes, file names, sizes, checksums, and URLs come from `src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
+The website's version, notes, file names, sizes, checksums, and URLs come from `cmdream-studio/src/product-info.json`. An empty URL means that package has not been published; the website disables that download instead of showing a broken link. To make files available:
 
-1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads. Keep write credentials private. Until this setup is complete and the product catalog has public URLs, the download buttons remain unavailable.
-2. Update `version` in `package.json`, the matching file names/version and release notes in `src/product-info.json`, then commit and push. A matching `v*` tag triggers the desktop builds.
-3. From GitHub Actions, download the `windows-downloads` and `linux-downloads` artifacts for the same workflow run. They are build artifacts for the repository owner, not public product downloads. Put all five `.exe` and `.AppImage` files in `cmdream-studio/release/`.
-4. In a local PowerShell session, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, and `R2_PUBLIC_BASE_URL` as environment variables. Use an R2 token scoped to the target bucket with object read/write permission. Do not paste credentials into chat, commit them, or set them as public Vite variables.
-5. From `cmdream-studio/`, run `npm run publish:downloads`. The script validates the artifacts, uploads them under versioned object keys, computes SHA-256 checksums, and updates `src/product-info.json`. Review and commit that JSON file, then let Render deploy the updated website. It prints no secrets.
+1. Create a Cloudflare R2 bucket and attach a public custom domain you control. Configure HTTPS and CORS as needed for browser downloads.
+2. In GitHub, open the repository **Settings → Secrets and variables → Actions**. Add repository secrets named `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`. Add `R2_PUBLIC_BASE_URL` under **Variables** with the HTTPS public domain for the bucket. Use a bucket-scoped token with object read/write permission; never commit or share its credentials.
+3. Keep `cmdream-studio/package.json` and `cmdream-studio/src/product-info.json` aligned. Push a matching version tag (for example `v1.3.0`). The workflow builds the installers, uploads them to R2, computes checksums, updates the public catalog, and pushes that catalog change so Render can redeploy.
+4. If you prefer to publish from your own computer, download the `windows-downloads`, `linux-downloads`, and `macos-downloads` workflow artifacts into `cmdream-studio/release/`, set the same R2 values as local environment variables, then run `npm run publish:downloads` from the `cmdream-studio/` directory. This command uploads any artifacts it finds and records unavailable builds without creating broken links.
 
-The uploader publishes every expected package it finds and skips missing builds, so Windows downloads can be published before the Linux AppImage is available. The catalog explicitly leaves skipped packages unavailable for that version. It may leave already uploaded objects in R2 if a later upload fails; the site catalog is updated only after all present uploads finish. Re-running the command safely replaces the same versioned object keys. Direct downloads are served by the configured R2 public domain—not by GitHub.
+The workflow refuses to publish if any expected platform package is missing. GitHub Actions only builds and uploads the release files to your configured R2 host; the website itself reads its bundled catalog and downloads directly from that host. Publishing requires these R2 settings—without them the website keeps the download buttons disabled rather than linking to files that do not exist.
 
 ## Deploy the website on Render
 
-1. Keep the repository-root `.github/workflows/`, `render.yaml`, and `cmdream-studio/` layout. In Render, choose **New → Blueprint** and connect the repository, or create a Static Site manually with root directory `cmdream-studio`, build command `npm ci --include=dev && npm run build`, and publish directory `dist`.
+1. Keep `.github/workflows/`, `render.yaml`, and the `cmdream-studio/` application folder at the repository root. In Render, choose **New → Blueprint** and connect the repository, or create a Static Site manually with root directory `cmdream-studio`, build command `npm ci --include=dev && npm run build`, and publish directory `dist`.
 2. Render assigns and displays the site's public URL in its dashboard, typically an `onrender.com` hostname. The exact hostname depends on availability; use the actual value shown in Render if configuring a custom domain or provider allowlist.
-4. To use a custom domain you control, open the static site's **Settings → Custom Domains**, add the hostname, and follow the DNS and TLS instructions Render provides.
+3. To use a custom domain you control, open the static site's **Settings → Custom Domains**, add the hostname, and follow the DNS and TLS instructions Render provides.
 
 Render hosts the public site, not an Ollama server. A Render-hosted site cannot connect to Ollama running on a visitor's computer. Ollama support is desktop-only.
 
@@ -91,20 +93,21 @@ Render hosts the public site, not an Ollama server. A Render-hosted site cannot 
 
 The app is in the `cmdream-studio/` subfolder, so GitHub Actions is at `.github/workflows/desktop-builds.yml`. It runs the app's build commands and builds:
 
-- Windows x64 and ARM64 installers `.exe` (NSIS)
+- Windows x64 and ARM64 installers `.exe` with desktop and Start Menu shortcuts
 - Portable Windows x64 and ARM64 `.exe`
-- Linux x86_64 `.AppImage`
+- Linux x86_64 `.AppImage` and Debian `.deb` packages
+- macOS Intel and Apple silicon `.dmg` installers and `.zip` app bundles
 
 Update the package version and catalog release notes, commit and push, then tag that commit:
 
 ```sh
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
-Pushing a `v*` tag runs the Windows and Linux builds and uploads workflow artifacts for the repository. It does not create GitHub Releases and is not the public download host. Run the R2 publishing steps above to make website downloads available.
+Pushing a `v*` tag runs the Windows, Linux, and macOS builds and uploads workflow artifacts for the repository. It does not create GitHub Releases and is not the public download host. Run the R2 publishing steps above to make website downloads available.
 
-The generated Windows installers are not code-signed. Windows may show a SmartScreen warning until you sign builds with a certificate you control.
+The Windows and macOS builds are not code-signed. Windows may show a SmartScreen warning, and macOS may block the first launch, until you sign builds with certificates you control. The Windows installer creates shortcuts and an uninstaller; removing the app leaves its local scene history in the user profile.
 
 ## Scene plans and renderer
 
@@ -116,34 +119,43 @@ Detail is selectable in the workspace and saved into each scene plan:
 
 | Detail | Example rose plan | Render treatment |
 |---|---|---|
-| Low | `DETAIL_EXAMPLES.low` in `src/scene.js` | Sparse stars and particles, simple shading, and fewer subject accents. |
-| Medium | `DETAIL_EXAMPLES.medium` in `src/scene.js` | More contours, shading, foliage veins, and background depth. |
-| High | `DETAIL_EXAMPLES.high` in `src/scene.js` | Full subject detail, layered shading, highlights, and balanced particles. |
-| Extra | `DETAIL_EXAMPLES.extra` in `src/scene.js` | Denser textures, finer contours, more subject accents, and additional particles. |
-| Max | `DETAIL_EXAMPLES.max` in `src/scene.js` | Maximum bounded detail, depth, shading, highlights, and motion accents. |
+| Low | `DETAIL_EXAMPLES.low` in `cmdream-studio/src/scene.js` | Sparse stars and particles, simple shading, and fewer subject accents. |
+| Medium | `DETAIL_EXAMPLES.medium` in `cmdream-studio/src/scene.js` | More contours, shading, foliage veins, and background depth. |
+| High | `DETAIL_EXAMPLES.high` in `cmdream-studio/src/scene.js` | Full subject detail, layered shading, highlights, and balanced particles. |
+| Extra | `DETAIL_EXAMPLES.extra` in `cmdream-studio/src/scene.js` | Denser textures, finer contours, more subject accents, and additional particles. |
+| Max | `DETAIL_EXAMPLES.max` in `cmdream-studio/src/scene.js` | Maximum bounded detail, depth, shading, highlights, and motion accents. |
 
 These are complete, validated scene plans for the same rose prompt; only their `detail` field differs. The same shared levels are available for every built-in and custom subject. They can be inspected with `DETAIL_EXAMPLES` in the source or composed in the workspace at each setting.
 
-Scene history and non-secret provider preferences (selected composer, model IDs, endpoints, and API version) are stored in local browser storage on that device. API keys are held in memory only and are never stored. In the desktop app, Chromium's application profile keeps this local data between launches; uninstalling the app may remove application data depending on the uninstall option used.
+Scene history and non-secret provider preferences (selected composer, model IDs, endpoints, and API version) are stored in local browser storage on that device. API keys are held in memory only and are never stored. In the desktop app, Chromium's application profile keeps this local data between launches. The Windows uninstaller removes the app but leaves this local data in place.
 
 ## Repository
 
 ```text
 repository-root/
 ├── .github/workflows/desktop-builds.yml  # GitHub Actions; must be at this level
+├── .gitignore
+├── LICENSE
+├── README.md
+├── cmdream-studio.zip          # Source archive for sharing
 ├── render.yaml                 # Render Blueprint; app root is cmdream-studio/
 └── cmdream-studio/
     ├── electron/               # Desktop shell and local Ollama bridge
     ├── src/                    # Fixed renderer, scene contract, provider adapters, UI
     ├── tests/
+    ├── assets/                 # App icons
+    ├── scripts/                # Download publishing scripts
     ├── index.html              # Public-facing landing page
     ├── about.html              # Product overview
     ├── studio.html             # Animation workspace
     ├── downloads.html          # Product catalog and direct file-host links
     ├── guide.html              # User documentation and project status
     ├── package.json
+    ├── package-lock.json
     └── vite.config.js
 ```
+
+The app source and its lockfile live only in `cmdream-studio/`; the root holds repository-level documentation, deployment configuration, and the release workflow.
 
 ## License
 

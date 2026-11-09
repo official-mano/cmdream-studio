@@ -185,7 +185,7 @@ function createWindow() {
     height: 980,
     minWidth: 850,
     minHeight: 650,
-    backgroundColor: "#0a0e0e",
+    backgroundColor: "#050505",
     title: `${app.name} — Animation Studio`,
     icon: path.join(__dirname, "..", "assets", process.platform === "win32" ? "cmdream-icon.ico" : "cmdream-icon.png"),
     webPreferences: {
